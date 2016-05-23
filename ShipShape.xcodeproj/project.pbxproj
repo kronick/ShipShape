@@ -13,7 +13,34 @@
 		903DEBB21CF16048009EDCA0 /* ShipShape.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 903DEBB01CF16048009EDCA0 /* ShipShape.xcdatamodeld */; };
 		903DEBB41CF16048009EDCA0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 903DEBB31CF16048009EDCA0 /* Assets.xcassets */; };
 		903DEBB71CF16048009EDCA0 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 903DEBB51CF16048009EDCA0 /* LaunchScreen.storyboard */; };
+		903DEBBF1CF16053009EDCA0 /* Mapbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 903DEBBE1CF16053009EDCA0 /* Mapbox.framework */; };
+		903DEBC01CF16060009EDCA0 /* Mapbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 903DEBBE1CF16053009EDCA0 /* Mapbox.framework */; };
+		903DEBC11CF16060009EDCA0 /* Mapbox.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 903DEBBE1CF16053009EDCA0 /* Mapbox.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		90ED4AA41CF161F200394401 /* sail.geojson in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4AA31CF161F200394401 /* sail.geojson */; };
+		90ED4AA61CF1622F00394401 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AA51CF1622F00394401 /* Utilities.swift */; };
+		90ED4AC81CF273D100394401 /* Vessel+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AC01CF273D100394401 /* Vessel+CoreDataProperties.swift */; };
+		90ED4AC91CF273D100394401 /* Vessel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AC11CF273D100394401 /* Vessel.swift */; };
+		90ED4ACA1CF273D100394401 /* Point+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AC21CF273D100394401 /* Point+CoreDataProperties.swift */; };
+		90ED4ACB1CF273D100394401 /* Point.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AC31CF273D100394401 /* Point.swift */; };
+		90ED4ACC1CF273D100394401 /* Path+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AC41CF273D100394401 /* Path+CoreDataProperties.swift */; };
+		90ED4ACD1CF273D100394401 /* Path.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AC51CF273D100394401 /* Path.swift */; };
+		90ED4ACE1CF273D100394401 /* Sailor+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AC61CF273D100394401 /* Sailor+CoreDataProperties.swift */; };
+		90ED4ACF1CF273D100394401 /* Sailor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AC71CF273D100394401 /* Sailor.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		903DEBC21CF16060009EDCA0 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				903DEBC11CF16060009EDCA0 /* Mapbox.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		903DEBA61CF16048009EDCA0 /* ShipShape.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShipShape.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -24,6 +51,17 @@
 		903DEBB31CF16048009EDCA0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		903DEBB61CF16048009EDCA0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		903DEBB81CF16048009EDCA0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		903DEBBE1CF16053009EDCA0 /* Mapbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Mapbox.framework; sourceTree = "<group>"; };
+		90ED4AA31CF161F200394401 /* sail.geojson */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sail.geojson; sourceTree = "<group>"; };
+		90ED4AA51CF1622F00394401 /* Utilities.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
+		90ED4AC01CF273D100394401 /* Vessel+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Vessel+CoreDataProperties.swift"; path = "ShipShape/Vessel+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		90ED4AC11CF273D100394401 /* Vessel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Vessel.swift; path = ShipShape/Vessel.swift; sourceTree = "<group>"; };
+		90ED4AC21CF273D100394401 /* Point+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Point+CoreDataProperties.swift"; path = "ShipShape/Point+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		90ED4AC31CF273D100394401 /* Point.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Point.swift; path = ShipShape/Point.swift; sourceTree = "<group>"; };
+		90ED4AC41CF273D100394401 /* Path+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Path+CoreDataProperties.swift"; path = "ShipShape/Path+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		90ED4AC51CF273D100394401 /* Path.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Path.swift; path = ShipShape/Path.swift; sourceTree = "<group>"; };
+		90ED4AC61CF273D100394401 /* Sailor+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Sailor+CoreDataProperties.swift"; path = "ShipShape/Sailor+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		90ED4AC71CF273D100394401 /* Sailor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Sailor.swift; path = ShipShape/Sailor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -31,6 +69,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				903DEBBF1CF16053009EDCA0 /* Mapbox.framework in Frameworks */,
+				903DEBC01CF16060009EDCA0 /* Mapbox.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -40,6 +80,7 @@
 		903DEB9D1CF16048009EDCA0 = {
 			isa = PBXGroup;
 			children = (
+				903DEBBE1CF16053009EDCA0 /* Mapbox.framework */,
 				903DEBA81CF16048009EDCA0 /* ShipShape */,
 				903DEBA71CF16048009EDCA0 /* Products */,
 			);
@@ -56,7 +97,10 @@
 		903DEBA81CF16048009EDCA0 /* ShipShape */ = {
 			isa = PBXGroup;
 			children = (
+				90ED4AB71CF26BE600394401 /* Managed Objects */,
 				903DEBA91CF16048009EDCA0 /* AppDelegate.swift */,
+				90ED4AA51CF1622F00394401 /* Utilities.swift */,
+				90ED4AA21CF161EB00394401 /* tracks */,
 				903DEBAB1CF16048009EDCA0 /* ViewController.swift */,
 				903DEBAD1CF16048009EDCA0 /* Main.storyboard */,
 				903DEBB31CF16048009EDCA0 /* Assets.xcassets */,
@@ -65,6 +109,30 @@
 				903DEBB01CF16048009EDCA0 /* ShipShape.xcdatamodeld */,
 			);
 			path = ShipShape;
+			sourceTree = "<group>";
+		};
+		90ED4AA21CF161EB00394401 /* tracks */ = {
+			isa = PBXGroup;
+			children = (
+				90ED4AA31CF161F200394401 /* sail.geojson */,
+			);
+			name = tracks;
+			sourceTree = "<group>";
+		};
+		90ED4AB71CF26BE600394401 /* Managed Objects */ = {
+			isa = PBXGroup;
+			children = (
+				90ED4AC71CF273D100394401 /* Sailor.swift */,
+				90ED4AC51CF273D100394401 /* Path.swift */,
+				90ED4AC31CF273D100394401 /* Point.swift */,
+				90ED4AC11CF273D100394401 /* Vessel.swift */,
+				90ED4AC01CF273D100394401 /* Vessel+CoreDataProperties.swift */,
+				90ED4AC21CF273D100394401 /* Point+CoreDataProperties.swift */,
+				90ED4AC41CF273D100394401 /* Path+CoreDataProperties.swift */,
+				90ED4AC61CF273D100394401 /* Sailor+CoreDataProperties.swift */,
+			);
+			name = "Managed Objects";
+			path = ..;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -77,6 +145,7 @@
 				903DEBA21CF16048009EDCA0 /* Sources */,
 				903DEBA31CF16048009EDCA0 /* Frameworks */,
 				903DEBA41CF16048009EDCA0 /* Resources */,
+				903DEBC21CF16060009EDCA0 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -125,6 +194,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				90ED4AA41CF161F200394401 /* sail.geojson in Resources */,
 				903DEBB71CF16048009EDCA0 /* LaunchScreen.storyboard in Resources */,
 				903DEBB41CF16048009EDCA0 /* Assets.xcassets in Resources */,
 				903DEBAF1CF16048009EDCA0 /* Main.storyboard in Resources */,
@@ -138,8 +208,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				90ED4ACE1CF273D100394401 /* Sailor+CoreDataProperties.swift in Sources */,
+				90ED4ACB1CF273D100394401 /* Point.swift in Sources */,
 				903DEBB21CF16048009EDCA0 /* ShipShape.xcdatamodeld in Sources */,
+				90ED4ACA1CF273D100394401 /* Point+CoreDataProperties.swift in Sources */,
+				90ED4AC91CF273D100394401 /* Vessel.swift in Sources */,
 				903DEBAC1CF16048009EDCA0 /* ViewController.swift in Sources */,
+				90ED4AA61CF1622F00394401 /* Utilities.swift in Sources */,
+				90ED4AC81CF273D100394401 /* Vessel+CoreDataProperties.swift in Sources */,
+				90ED4ACC1CF273D100394401 /* Path+CoreDataProperties.swift in Sources */,
+				90ED4ACF1CF273D100394401 /* Sailor.swift in Sources */,
+				90ED4ACD1CF273D100394401 /* Path.swift in Sources */,
 				903DEBAA1CF16048009EDCA0 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -255,7 +334,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = ShipShape/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.diskcactus.ShipShape;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -266,7 +350,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = ShipShape/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.diskcactus.ShipShape;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -292,6 +381,7 @@
 				903DEBBD1CF16048009EDCA0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 

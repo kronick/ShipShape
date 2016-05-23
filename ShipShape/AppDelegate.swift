@@ -17,6 +17,57 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.
+        
+        
+        // Force the logged in username to "anonymous"
+        let defaultUsername = "anonymous"
+        let defaultVesselName = "anonymous ship"
+        
+        var currentUsername = defaultUsername
+        
+        NSUserDefaults.standardUserDefaults().setObject(defaultUsername, forKey: "loggedInUsername")
+        
+        // Make sure a default user and vessel are set in the CoreData store
+        let managedObjectContext = (UIApplication.sharedApplication().delegate as! AppDelegate).managedObjectContext
+        
+        // First fetch looking for a user
+        var loggedInSailorExists = false
+        
+        if let user = NSUserDefaults.standardUserDefaults().objectForKey("loggedInUsername") as? String {
+            currentUsername = user
+            
+            let sailorResult = Sailor.FetchByUsernameInContext(self.managedObjectContext, username: currentUsername)
+            if sailorResult != nil {
+                loggedInSailorExists = true
+                Sailor.ActiveSailor = sailorResult
+            }
+        }
+
+        if !loggedInSailorExists {
+            Sailor.ActiveSailor = Sailor.CreateInContext(self.managedObjectContext, username: currentUsername, realName: "Local User")
+        }
+        
+        // Now make sure the current sailor has a vessel
+        let vesselResults = Vessel.FetchByOwnerInContext(self.managedObjectContext, owner: Sailor.ActiveSailor!)
+        
+        if vesselResults.count == 0 {
+            Vessel.ActiveVessel = Vessel.CreateInContext(self.managedObjectContext, name: defaultVesselName, owner: Sailor.ActiveSailor)
+        }
+        else {
+            Vessel.ActiveVessel = vesselResults[0]
+        }
+        
+        
+        do {
+            try managedObjectContext.save()
+        }
+        catch let error as NSError {
+            print("Could not save data \(error), \(error.userInfo)")
+        }
+        
+        print("Current Sailor: \(Sailor.ActiveSailor?.username)\nCurrent Vessel: \(Vessel.ActiveVessel?.name)")
+        
+        
         return true
     }
 
