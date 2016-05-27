@@ -38,6 +38,23 @@ public extension CGFloat {
     }
 }
 
+public extension NSNumber {
+    public static func toHoursMinutes(time: NSNumber) -> (Int, Int) {
+        let hours = Int(floor(Double(time) / 3600.0))
+        let minutes = Int(floor(Double(time) / 60 - 60 * Double(hours)))
+        
+        return (hours, minutes)
+    }
+}
+
+func metersPerSecondToKnots(mps: NSNumber) -> NSNumber{
+    return Double(mps) * 1.9438445 as Double
+}
+func metersToNauticalMiles(m: NSNumber) -> NSNumber {
+    return Double(m) / 1852.0 as Double
+}
+
+
 extension CGImage {
     //func resize(scale:CGFloat)-> CGImage {
     func scale(scale:CGFloat)-> CGImage {

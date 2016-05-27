@@ -6,6 +6,7 @@
         <attribute name="globalID" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
         <attribute name="notes" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="state" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="title" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="totalDistance" optional="YES" attributeType="Float" defaultValueString="0.0" syncable="YES"/>
         <attribute name="totalTime" optional="YES" attributeType="Float" defaultValueString="0.0" syncable="YES"/>
         <attribute name="type" optional="YES" attributeType="String" syncable="YES"/>
@@ -40,7 +41,7 @@
         <relationship name="paths" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Path" inverseName="vessel" inverseEntity="Path" syncable="YES"/>
     </entity>
     <elements>
-        <element name="Path" positionX="-36" positionY="-43" width="128" height="208"/>
+        <element name="Path" positionX="-36" positionY="-43" width="128" height="223"/>
         <element name="Point" positionX="151" positionY="-40" width="128" height="148"/>
         <element name="Vessel" positionX="-243" positionY="-90" width="128" height="163"/>
         <element name="Sailor" positionX="-38" positionY="-229" width="128" height="118"/>

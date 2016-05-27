@@ -14,6 +14,7 @@ import CoreData
 
 extension Path {
 
+    @NSManaged var title: String?
     @NSManaged var created: NSDate?
     @NSManaged var globalID: NSNumber?
     @NSManaged var notes: String?

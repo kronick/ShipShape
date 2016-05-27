@@ -26,6 +26,21 @@
 		90ED4ACD1CF273D100394401 /* Path.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AC51CF273D100394401 /* Path.swift */; };
 		90ED4ACE1CF273D100394401 /* Sailor+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AC61CF273D100394401 /* Sailor+CoreDataProperties.swift */; };
 		90ED4ACF1CF273D100394401 /* Sailor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AC71CF273D100394401 /* Sailor.swift */; };
+		90ED4AE91CF378DB00394401 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AE81CF378DB00394401 /* SwiftyJSON.swift */; };
+		90ED4AEC1CF39AB400394401 /* AnnotationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AEB1CF39AB400394401 /* AnnotationManager.swift */; };
+		90ED4AF81CF5192700394401 /* icon-add-off@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4AEE1CF5192700394401 /* icon-add-off@2x.png */; };
+		90ED4AF91CF5192700394401 /* icon-add-on@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4AEF1CF5192700394401 /* icon-add-on@2x.png */; };
+		90ED4AFA1CF5192700394401 /* icon-anchor-off@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4AF01CF5192700394401 /* icon-anchor-off@2x.png */; };
+		90ED4AFB1CF5192700394401 /* icon-anchor-on@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4AF11CF5192700394401 /* icon-anchor-on@2x.png */; };
+		90ED4AFC1CF5192700394401 /* icon-location-off@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4AF21CF5192700394401 /* icon-location-off@2x.png */; };
+		90ED4AFD1CF5192700394401 /* icon-location-on@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4AF31CF5192700394401 /* icon-location-on@2x.png */; };
+		90ED4AFE1CF5192700394401 /* icon-stats-off@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4AF41CF5192700394401 /* icon-stats-off@2x.png */; };
+		90ED4AFF1CF5192700394401 /* icon-stats-on@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4AF51CF5192700394401 /* icon-stats-on@2x.png */; };
+		90ED4B001CF5192700394401 /* icon-stop-off@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4AF61CF5192700394401 /* icon-stop-off@2x.png */; };
+		90ED4B011CF5192700394401 /* icon-stop-on@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4AF71CF5192700394401 /* icon-stop-on@2x.png */; };
+		90ED4B041CF6BAEF00394401 /* icon-hamburger-off@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4B021CF6BAEE00394401 /* icon-hamburger-off@2x.png */; };
+		90ED4B051CF6BAEF00394401 /* icon-hamburger-on@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4B031CF6BAEE00394401 /* icon-hamburger-on@2x.png */; };
+		90ED4B071CF784C800394401 /* TrackListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4B061CF784C700394401 /* TrackListViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -62,6 +77,21 @@
 		90ED4AC51CF273D100394401 /* Path.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Path.swift; path = ShipShape/Path.swift; sourceTree = "<group>"; };
 		90ED4AC61CF273D100394401 /* Sailor+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Sailor+CoreDataProperties.swift"; path = "ShipShape/Sailor+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		90ED4AC71CF273D100394401 /* Sailor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Sailor.swift; path = ShipShape/Sailor.swift; sourceTree = "<group>"; };
+		90ED4AE81CF378DB00394401 /* SwiftyJSON.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SwiftyJSON.swift; path = SwiftyJSON/Source/SwiftyJSON.swift; sourceTree = SOURCE_ROOT; };
+		90ED4AEB1CF39AB400394401 /* AnnotationManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnnotationManager.swift; sourceTree = "<group>"; };
+		90ED4AEE1CF5192700394401 /* icon-add-off@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-add-off@2x.png"; sourceTree = "<group>"; };
+		90ED4AEF1CF5192700394401 /* icon-add-on@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-add-on@2x.png"; sourceTree = "<group>"; };
+		90ED4AF01CF5192700394401 /* icon-anchor-off@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-anchor-off@2x.png"; sourceTree = "<group>"; };
+		90ED4AF11CF5192700394401 /* icon-anchor-on@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-anchor-on@2x.png"; sourceTree = "<group>"; };
+		90ED4AF21CF5192700394401 /* icon-location-off@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-location-off@2x.png"; sourceTree = "<group>"; };
+		90ED4AF31CF5192700394401 /* icon-location-on@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-location-on@2x.png"; sourceTree = "<group>"; };
+		90ED4AF41CF5192700394401 /* icon-stats-off@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-stats-off@2x.png"; sourceTree = "<group>"; };
+		90ED4AF51CF5192700394401 /* icon-stats-on@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-stats-on@2x.png"; sourceTree = "<group>"; };
+		90ED4AF61CF5192700394401 /* icon-stop-off@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-stop-off@2x.png"; sourceTree = "<group>"; };
+		90ED4AF71CF5192700394401 /* icon-stop-on@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-stop-on@2x.png"; sourceTree = "<group>"; };
+		90ED4B021CF6BAEE00394401 /* icon-hamburger-off@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-hamburger-off@2x.png"; sourceTree = "<group>"; };
+		90ED4B031CF6BAEE00394401 /* icon-hamburger-on@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-hamburger-on@2x.png"; sourceTree = "<group>"; };
+		90ED4B061CF784C700394401 /* TrackListViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TrackListViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -97,16 +127,20 @@
 		903DEBA81CF16048009EDCA0 /* ShipShape */ = {
 			isa = PBXGroup;
 			children = (
+				90ED4AED1CF5192700394401 /* graphics */,
 				90ED4AB71CF26BE600394401 /* Managed Objects */,
 				903DEBA91CF16048009EDCA0 /* AppDelegate.swift */,
 				90ED4AA51CF1622F00394401 /* Utilities.swift */,
 				90ED4AA21CF161EB00394401 /* tracks */,
 				903DEBAB1CF16048009EDCA0 /* ViewController.swift */,
+				90ED4AEB1CF39AB400394401 /* AnnotationManager.swift */,
+				90ED4B061CF784C700394401 /* TrackListViewController.swift */,
 				903DEBAD1CF16048009EDCA0 /* Main.storyboard */,
 				903DEBB31CF16048009EDCA0 /* Assets.xcassets */,
 				903DEBB51CF16048009EDCA0 /* LaunchScreen.storyboard */,
 				903DEBB81CF16048009EDCA0 /* Info.plist */,
 				903DEBB01CF16048009EDCA0 /* ShipShape.xcdatamodeld */,
+				90ED4AEA1CF378DF00394401 /* Libraries */,
 			);
 			path = ShipShape;
 			sourceTree = "<group>";
@@ -133,6 +167,34 @@
 			);
 			name = "Managed Objects";
 			path = ..;
+			sourceTree = "<group>";
+		};
+		90ED4AEA1CF378DF00394401 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				90ED4AE81CF378DB00394401 /* SwiftyJSON.swift */,
+			);
+			name = Libraries;
+			sourceTree = "<group>";
+		};
+		90ED4AED1CF5192700394401 /* graphics */ = {
+			isa = PBXGroup;
+			children = (
+				90ED4B021CF6BAEE00394401 /* icon-hamburger-off@2x.png */,
+				90ED4B031CF6BAEE00394401 /* icon-hamburger-on@2x.png */,
+				90ED4AEE1CF5192700394401 /* icon-add-off@2x.png */,
+				90ED4AEF1CF5192700394401 /* icon-add-on@2x.png */,
+				90ED4AF01CF5192700394401 /* icon-anchor-off@2x.png */,
+				90ED4AF11CF5192700394401 /* icon-anchor-on@2x.png */,
+				90ED4AF21CF5192700394401 /* icon-location-off@2x.png */,
+				90ED4AF31CF5192700394401 /* icon-location-on@2x.png */,
+				90ED4AF41CF5192700394401 /* icon-stats-off@2x.png */,
+				90ED4AF51CF5192700394401 /* icon-stats-on@2x.png */,
+				90ED4AF61CF5192700394401 /* icon-stop-off@2x.png */,
+				90ED4AF71CF5192700394401 /* icon-stop-on@2x.png */,
+			);
+			name = graphics;
+			path = ../graphics;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -168,6 +230,11 @@
 				TargetAttributes = {
 					903DEBA51CF16048009EDCA0 = {
 						CreatedOnToolsVersion = 7.3;
+						SystemCapabilities = {
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
@@ -194,10 +261,22 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				90ED4AF91CF5192700394401 /* icon-add-on@2x.png in Resources */,
+				90ED4AFD1CF5192700394401 /* icon-location-on@2x.png in Resources */,
+				90ED4B051CF6BAEF00394401 /* icon-hamburger-on@2x.png in Resources */,
 				90ED4AA41CF161F200394401 /* sail.geojson in Resources */,
+				90ED4AFC1CF5192700394401 /* icon-location-off@2x.png in Resources */,
+				90ED4B041CF6BAEF00394401 /* icon-hamburger-off@2x.png in Resources */,
+				90ED4B011CF5192700394401 /* icon-stop-on@2x.png in Resources */,
+				90ED4AF81CF5192700394401 /* icon-add-off@2x.png in Resources */,
 				903DEBB71CF16048009EDCA0 /* LaunchScreen.storyboard in Resources */,
+				90ED4AFA1CF5192700394401 /* icon-anchor-off@2x.png in Resources */,
+				90ED4AFB1CF5192700394401 /* icon-anchor-on@2x.png in Resources */,
+				90ED4AFF1CF5192700394401 /* icon-stats-on@2x.png in Resources */,
+				90ED4AFE1CF5192700394401 /* icon-stats-off@2x.png in Resources */,
 				903DEBB41CF16048009EDCA0 /* Assets.xcassets in Resources */,
 				903DEBAF1CF16048009EDCA0 /* Main.storyboard in Resources */,
+				90ED4B001CF5192700394401 /* icon-stop-off@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -208,17 +287,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				90ED4AEC1CF39AB400394401 /* AnnotationManager.swift in Sources */,
 				90ED4ACE1CF273D100394401 /* Sailor+CoreDataProperties.swift in Sources */,
 				90ED4ACB1CF273D100394401 /* Point.swift in Sources */,
 				903DEBB21CF16048009EDCA0 /* ShipShape.xcdatamodeld in Sources */,
 				90ED4ACA1CF273D100394401 /* Point+CoreDataProperties.swift in Sources */,
 				90ED4AC91CF273D100394401 /* Vessel.swift in Sources */,
 				903DEBAC1CF16048009EDCA0 /* ViewController.swift in Sources */,
+				90ED4B071CF784C800394401 /* TrackListViewController.swift in Sources */,
 				90ED4AA61CF1622F00394401 /* Utilities.swift in Sources */,
 				90ED4AC81CF273D100394401 /* Vessel+CoreDataProperties.swift in Sources */,
 				90ED4ACC1CF273D100394401 /* Path+CoreDataProperties.swift in Sources */,
 				90ED4ACF1CF273D100394401 /* Sailor.swift in Sources */,
 				90ED4ACD1CF273D100394401 /* Path.swift in Sources */,
+				90ED4AE91CF378DB00394401 /* SwiftyJSON.swift in Sources */,
 				903DEBAA1CF16048009EDCA0 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
