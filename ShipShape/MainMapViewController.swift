@@ -19,7 +19,9 @@ public enum TrackingState: String {
     case Stopped
 }
 
-class ViewController: UIViewController, MGLMapViewDelegate, CLLocationManagerDelegate {
+private var KVOContext = 0
+
+class MainMapViewController: UIViewController, CLLocationManagerDelegate {
     
     // Retreive the managedObjectContext from AppDelegate
     let appDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
@@ -30,9 +32,11 @@ class ViewController: UIViewController, MGLMapViewDelegate, CLLocationManagerDel
 
     var activePath: Path?
     
-    var locationManager: CLLocationManager = CLLocationManager()
+    var locationManager = CLLocationManager()
     
     var trackingState = TrackingState.Stopped
+    
+    var mapManager: MapManager?
     
     @IBOutlet weak var startNewTrackButton: UIButton!
     @IBOutlet weak var followUserButton: UIButton!
@@ -50,15 +54,17 @@ class ViewController: UIViewController, MGLMapViewDelegate, CLLocationManagerDel
         mapView.attributionButton.hidden = true
         
         mapView.setUserTrackingMode(MGLUserTrackingMode.Follow, animated: true)
+        self.mapManager = MapManager(mapView: self.mapView)
         
-        AnnotationManager.SharedInstance.mapView = self.mapView
         
+        self.mapManager?.addObserver(self, forKeyPath: "userTrackingMode", options: .New, context: &KVOContext)
         
-        //let defaultPath = Path.CreateFromGeoJSONInContext(self.managedObjectContext, filename: "sail") {
-        //    AnnotationManager.SharedInstance.updateAllPaths()
-        //}
-        //AnnotationManager.SharedInstance.addAnnotationForPath(defaultPath)
-        
+//        
+//        let defaultPath = Path.CreateFromGeoJSONInContext(self.managedObjectContext, filename: "sail") {
+//            self.mapManager?.updateAllPaths()
+//        }
+//        self.mapManager?.addAnnotationForPath(defaultPath)
+//        
         
         // Check if there is an open path recording in progress
         let recordingPaths = Path.FetchPathsWithStateInContext(self.managedObjectContext, state: .Recording)
@@ -66,8 +72,8 @@ class ViewController: UIViewController, MGLMapViewDelegate, CLLocationManagerDel
         for p in recordingPaths {
             if i == 0 {
                 self.activePath = p
-                AnnotationManager.SharedInstance.addAnnotationForPath(self.activePath!)
-                if let annotation = AnnotationManager.SharedInstance.pathAnnotations[self.activePath!] {
+                self.mapManager?.addAnnotationForPath(self.activePath!)
+                if let annotation = self.mapManager?.pathAnnotations[self.activePath!] {
                     //self.mapView.showAnnotations([annotation], animated: true)
                 }
                 
@@ -82,7 +88,7 @@ class ViewController: UIViewController, MGLMapViewDelegate, CLLocationManagerDel
         
         let allPaths = Path.FetchPathsForSailorInContext(self.managedObjectContext, sailor: Sailor.ActiveSailor!)
         for p in allPaths {
-            AnnotationManager.SharedInstance.addAnnotationForPath(p)
+            self.mapManager?.addAnnotationForPath(p)
         }
         
         appDelegate.saveContext()
@@ -99,15 +105,20 @@ class ViewController: UIViewController, MGLMapViewDelegate, CLLocationManagerDel
         self.locationManager.pausesLocationUpdatesAutomatically = false
     }
 
-    func mapView(mapView: MGLMapView, annotationCanShowCallout annotation: MGLAnnotation) -> Bool {
-        // Always try to show a callout when an annotation is tapped.
-        return true
+    override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
+        if context == &KVOContext {
+            if keyPath == "userTrackingMode" {
+                switch(mapView.userTrackingMode) {
+                case .None:
+                    self.followUserButton.selected = false
+                case .Follow, .FollowWithCourse, .FollowWithHeading:
+                    self.followUserButton.selected = true
+                }
+            }
+        }
     }
-   
-    
     // MARK: - CLLocationManagerDelegate
-    
-    
+
     func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
         print("didChangeAuthorizationStatus")
         
@@ -143,42 +154,11 @@ class ViewController: UIViewController, MGLMapViewDelegate, CLLocationManagerDel
         self.appDelegate.saveContext()
 
         
-        AnnotationManager.SharedInstance.updateAnnotationForPath(self.activePath!)
+        self.mapManager?.updateAnnotationForPath(self.activePath!)
         
     }
     
     
-    // MARK: - MGLMapViewDelegate
-    func mapView(mapView: MGLMapView, alphaForShapeAnnotation annotation: MGLShape) -> CGFloat {
-        return 1
-    }
-    func mapView(mapView: MGLMapView, lineWidthForPolylineAnnotation annotation: MGLPolyline) -> CGFloat {
-        return 5.0
-    }
-    func mapView(mapView: MGLMapView, strokeColorForShapeAnnotation annotation: MGLShape) -> UIColor {
-        if(annotation.title == "A polyline" && annotation is MGLPolyline) {
-            return UIColor(red: 0.94, green: 0.30, blue: 0.30, alpha: 1)
-        }
-        else {
-            return UIColor.blueColor()
-        }
-    }
-    
-    func mapView(mapView: MGLMapView, didChangeUserTrackingMode mode: MGLUserTrackingMode, animated: Bool) {
-        switch(mode) {
-        case .None:
-            self.followUserButton.selected = false
-        case .Follow, .FollowWithCourse, .FollowWithHeading:
-            self.followUserButton.selected = true
-        }
-    }
-    
-    func mapView(mapView: MGLMapView, didSelectAnnotation annotation: MGLAnnotation) {
-        
-    }
-    func mapView(mapView: MGLMapView, tapOnCalloutForAnnotation annotation: MGLAnnotation) {
-        
-    }
     
     // MARK: - Interface actions
     @IBAction func unwindToMap(segue: UIStoryboardSegue) {
@@ -247,15 +227,14 @@ class ViewController: UIViewController, MGLMapViewDelegate, CLLocationManagerDel
         self.activePath = Path.CreateInContext(self.managedObjectContext, title: "Active Route", state: .Recording , vessel: .ActiveVessel, creator: .ActiveSailor)
         appDelegate.saveContext()
         
-        AnnotationManager.SharedInstance.addAnnotationForPath(self.activePath!)
+        self.mapManager?.addAnnotationForPath(self.activePath!)
         
     }
     
     @IBAction func stopRecordingTrack(sender: AnyObject? = nil) {
         self.changeTrackingState(.Stopped)
         self.activePath?.state = PathState.Complete.rawValue
-        //AnnotationManager.SharedInstance.removeAnnotationForPath(self.activePath!)
-        mapView.showAnnotations([AnnotationManager.SharedInstance.pathAnnotations[self.activePath!]!], animated: true)
+        //self.mapManager?.removeAnnotationForPath(self.activePath!)
         
         appDelegate.saveContext()
         self.activePath = nil
@@ -263,7 +242,7 @@ class ViewController: UIViewController, MGLMapViewDelegate, CLLocationManagerDel
     }
     
     @IBAction func toggleStats(sender: AnyObject? = nil) {
-        AnnotationManager.SharedInstance.updateAllPaths()
+        self.mapManager?.updateAllPaths()
         self.activePath?.recalculateStats()
         print("Total Time: \(self.activePath?.totalTime)")
         print("Total Distance: \(self.activePath?.totalDistance)")

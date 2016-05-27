@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		903DEBAA1CF16048009EDCA0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 903DEBA91CF16048009EDCA0 /* AppDelegate.swift */; };
-		903DEBAC1CF16048009EDCA0 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 903DEBAB1CF16048009EDCA0 /* ViewController.swift */; };
+		903DEBAC1CF16048009EDCA0 /* MainMapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 903DEBAB1CF16048009EDCA0 /* MainMapViewController.swift */; };
 		903DEBAF1CF16048009EDCA0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 903DEBAD1CF16048009EDCA0 /* Main.storyboard */; };
 		903DEBB21CF16048009EDCA0 /* ShipShape.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 903DEBB01CF16048009EDCA0 /* ShipShape.xcdatamodeld */; };
 		903DEBB41CF16048009EDCA0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 903DEBB31CF16048009EDCA0 /* Assets.xcassets */; };
@@ -27,7 +27,7 @@
 		90ED4ACE1CF273D100394401 /* Sailor+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AC61CF273D100394401 /* Sailor+CoreDataProperties.swift */; };
 		90ED4ACF1CF273D100394401 /* Sailor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AC71CF273D100394401 /* Sailor.swift */; };
 		90ED4AE91CF378DB00394401 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AE81CF378DB00394401 /* SwiftyJSON.swift */; };
-		90ED4AEC1CF39AB400394401 /* AnnotationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AEB1CF39AB400394401 /* AnnotationManager.swift */; };
+		90ED4AEC1CF39AB400394401 /* MapManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AEB1CF39AB400394401 /* MapManager.swift */; };
 		90ED4AF81CF5192700394401 /* icon-add-off@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4AEE1CF5192700394401 /* icon-add-off@2x.png */; };
 		90ED4AF91CF5192700394401 /* icon-add-on@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4AEF1CF5192700394401 /* icon-add-on@2x.png */; };
 		90ED4AFA1CF5192700394401 /* icon-anchor-off@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4AF01CF5192700394401 /* icon-anchor-off@2x.png */; };
@@ -60,7 +60,7 @@
 /* Begin PBXFileReference section */
 		903DEBA61CF16048009EDCA0 /* ShipShape.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShipShape.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		903DEBA91CF16048009EDCA0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		903DEBAB1CF16048009EDCA0 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		903DEBAB1CF16048009EDCA0 /* MainMapViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMapViewController.swift; sourceTree = "<group>"; };
 		903DEBAE1CF16048009EDCA0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		903DEBB11CF16048009EDCA0 /* ShipShape.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = ShipShape.xcdatamodel; sourceTree = "<group>"; };
 		903DEBB31CF16048009EDCA0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -78,7 +78,7 @@
 		90ED4AC61CF273D100394401 /* Sailor+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Sailor+CoreDataProperties.swift"; path = "ShipShape/Sailor+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		90ED4AC71CF273D100394401 /* Sailor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Sailor.swift; path = ShipShape/Sailor.swift; sourceTree = "<group>"; };
 		90ED4AE81CF378DB00394401 /* SwiftyJSON.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SwiftyJSON.swift; path = SwiftyJSON/Source/SwiftyJSON.swift; sourceTree = SOURCE_ROOT; };
-		90ED4AEB1CF39AB400394401 /* AnnotationManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnnotationManager.swift; sourceTree = "<group>"; };
+		90ED4AEB1CF39AB400394401 /* MapManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MapManager.swift; sourceTree = "<group>"; };
 		90ED4AEE1CF5192700394401 /* icon-add-off@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-add-off@2x.png"; sourceTree = "<group>"; };
 		90ED4AEF1CF5192700394401 /* icon-add-on@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-add-on@2x.png"; sourceTree = "<group>"; };
 		90ED4AF01CF5192700394401 /* icon-anchor-off@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-anchor-off@2x.png"; sourceTree = "<group>"; };
@@ -132,8 +132,8 @@
 				903DEBA91CF16048009EDCA0 /* AppDelegate.swift */,
 				90ED4AA51CF1622F00394401 /* Utilities.swift */,
 				90ED4AA21CF161EB00394401 /* tracks */,
-				903DEBAB1CF16048009EDCA0 /* ViewController.swift */,
-				90ED4AEB1CF39AB400394401 /* AnnotationManager.swift */,
+				903DEBAB1CF16048009EDCA0 /* MainMapViewController.swift */,
+				90ED4AEB1CF39AB400394401 /* MapManager.swift */,
 				90ED4B061CF784C700394401 /* TrackListViewController.swift */,
 				903DEBAD1CF16048009EDCA0 /* Main.storyboard */,
 				903DEBB31CF16048009EDCA0 /* Assets.xcassets */,
@@ -287,13 +287,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				90ED4AEC1CF39AB400394401 /* AnnotationManager.swift in Sources */,
+				90ED4AEC1CF39AB400394401 /* MapManager.swift in Sources */,
 				90ED4ACE1CF273D100394401 /* Sailor+CoreDataProperties.swift in Sources */,
 				90ED4ACB1CF273D100394401 /* Point.swift in Sources */,
 				903DEBB21CF16048009EDCA0 /* ShipShape.xcdatamodeld in Sources */,
 				90ED4ACA1CF273D100394401 /* Point+CoreDataProperties.swift in Sources */,
 				90ED4AC91CF273D100394401 /* Vessel.swift in Sources */,
-				903DEBAC1CF16048009EDCA0 /* ViewController.swift in Sources */,
+				903DEBAC1CF16048009EDCA0 /* MainMapViewController.swift in Sources */,
 				90ED4B071CF784C800394401 /* TrackListViewController.swift in Sources */,
 				90ED4AA61CF1622F00394401 /* Utilities.swift in Sources */,
 				90ED4AC81CF273D100394401 /* Vessel+CoreDataProperties.swift in Sources */,

@@ -44,10 +44,11 @@ class Path: NSManagedObject {
         return newPath
     }
     
-    class func CreateFromGeoJSONInContext(moc: NSManagedObjectContext, filename: String, title: String? = nil,  created: NSDate? = NSDate(), saveOnComplete: Bool = true, completion: ()->() = {}) -> Path {
+    class func CreateFromGeoJSONInContext(moc: NSManagedObjectContext, filename: String, title: String? = nil, creator: Sailor? = Sailor.ActiveSailor, created: NSDate? = NSDate(), saveOnComplete: Bool = true, completion: ()->() = {}) -> Path {
         let newPath = NSEntityDescription.insertNewObjectForEntityForName("Path", inManagedObjectContext: moc) as! Path
         
         newPath.created = created
+        newPath.creator = creator
         newPath.title = title == nil ? filename : title
         newPath.state = PathState.Downloading.rawValue
         
