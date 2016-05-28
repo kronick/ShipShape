@@ -20,21 +20,36 @@ class TrackListViewController : UIViewController, UITableViewDataSource, UITable
     // An array to hold track objects
     var tracks = [Path]()
     
+    @IBOutlet weak var tableView: UITableView!
+    
+    // MARK: - UIViewController 
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         //self.trackTableView.registerClass(UITableViewCell.classForCoder(), forCellReuseIdentifier: "PathCell")
         self.trackTableView.dataSource = self
-        
-        if Sailor.ActiveSailor != nil {
-            self.tracks = Path.FetchPathsForSailorInContext(self.managedObjectContext, sailor: Sailor.ActiveSailor!)
-        }
     }
     
     override func viewWillAppear(animated: Bool) {
-        
+        super.viewWillAppear(animated)
+        //self.tableView.beginUpdates()
+        if Sailor.ActiveSailor != nil {
+            self.tracks = Path.FetchPathsForSailorInContext(self.managedObjectContext, sailor: Sailor.ActiveSailor!)
+        }
+        //self.tableView.endUpdates()
+        self.tableView.reloadData()
     }
     
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        if let index = self.tableView.indexPathForSelectedRow {
+            let path = self.tracks[index.row]
+            
+            if let dest = segue.destinationViewController as? TrackDetailViewController {
+                dest.activePath = path
+            }
+        }
+    }   
     
     // MARK: - UITableViewDelegate
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

@@ -16,20 +16,51 @@ class MapManager : NSObject, MGLMapViewDelegate {
     var pathAnnotations = [Path:PathAnnotation]()   // Holds a list of PathAnnotations indexed by Path instances
     var pathAnnotationSegmentStyles = [MGLPolyline:PathAnnotationSegmentStyle]()    // Holds style info for each path segment. Must be updated in concert with pathAnnotations!!
     var mapView: MGLMapView? = nil
+    var mapIsLoaded = false
+    
+    var initialAnnotationsToDisplay: [MGLPolyline]
+    var initialEdgePadding = UIEdgeInsetsZero
+    var initialAnnotationsAnimated = false
     
     dynamic var userTrackingMode: MGLUserTrackingMode = .None   // dynamic so this can be KVO'ed
     
     init(mapView: MGLMapView?) {
+        self.initialAnnotationsToDisplay = [MGLPolyline]()
         super.init()
         self.mapView = mapView
         self.mapView?.delegate = self
+    }
+    
+    func clearAnnotations() {
+        for path in pathAnnotations.keys {
+            removeAnnotationForPath(path)
+        }
+    }
+    
+    func showPaths(paths: [Path], animated: Bool = true, padding: UIEdgeInsets = UIEdgeInsetsMake(20, 20, 20, 20)) {
+        var annotations = [MGLPolyline]()
+        for p in paths {
+            if let pathAnnotation = self.pathAnnotations[p] {
+                let segments = pathAnnotation.segments
+                let polylines = segments.map({$0.polyline})
+                annotations.appendContentsOf(polylines)
+            }
+        }
+    
+        if !mapIsLoaded {
+            initialAnnotationsToDisplay = annotations
+            initialEdgePadding = padding
+            initialAnnotationsAnimated = animated
+        }
+        else {
+            mapView?.showAnnotations(annotations, edgePadding: padding, animated: animated)
+        }
     }
     
     func updateAllPaths() {
         for path in pathAnnotations.keys {
             updateAnnotationForPath(path)
         }
-        
         
         // Force view refresh
         mapView?.centerCoordinate = CLLocationCoordinate2D(latitude: mapView!.centerCoordinate.latitude, longitude: mapView!.centerCoordinate.longitude)
@@ -130,13 +161,25 @@ class MapManager : NSObject, MGLMapViewDelegate {
             style.lineWidth = 5.0
         }
         
-        style.strokeColor = UIColor(red: CGFloat.random(0,1), green: CGFloat.random(0,1), blue: CGFloat.random(0,1), alpha: 1)
+        style.strokeColor = UIColor(red: CGFloat.random(0,1), green: CGFloat.random(0,1), blue: CGFloat.random(0,1), alpha: 1.0)
         
         return style
         
     }
 
     // MARK: - MGLMapViewDelegate
+    
+    func mapViewDidFinishLoadingMap(mapView: MGLMapView) {
+        mapIsLoaded = true
+        
+        if initialAnnotationsToDisplay.count > 0 {
+            mapView.showAnnotations(initialAnnotationsToDisplay, edgePadding: initialEdgePadding, animated: initialAnnotationsAnimated)
+        }
+        
+    }
+    func mapViewDidFinishRenderingFrame(mapView: MGLMapView, fullyRendered: Bool) {
+        //self.updateAllPaths()
+    }
     func mapView(mapView: MGLMapView, alphaForShapeAnnotation annotation: MGLShape) -> CGFloat {
         if let polyline = annotation as? MGLPolyline {
             if let style = pathAnnotationSegmentStyles[polyline] {
