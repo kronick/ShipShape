@@ -17,6 +17,7 @@ class MapManager : NSObject, MGLMapViewDelegate {
     var pathAnnotationSegmentStyles = [MGLPolyline:PathAnnotationSegmentStyle]()    // Holds style info for each path segment. Must be updated in concert with pathAnnotations!!
     var mapView: MGLMapView? = nil
     var mapIsLoaded = false
+    var mapOverlay: AnimatedMapOverlay?
     
     var initialAnnotationsToDisplay: [MGLPolyline]
     var initialEdgePadding = UIEdgeInsetsZero
@@ -25,9 +26,15 @@ class MapManager : NSObject, MGLMapViewDelegate {
     dynamic var userTrackingMode: MGLUserTrackingMode = .None   // dynamic so this can be KVO'ed
     
     init(mapView: MGLMapView?) {
+        
         self.initialAnnotationsToDisplay = [MGLPolyline]()
         super.init()
+        
         self.mapView = mapView
+        
+        self.mapOverlay = AnimatedMapOverlay(mapManager: self)
+        self.mapView?.addSubview(self.mapOverlay!)
+        
         self.mapView?.delegate = self
     }
     
@@ -167,7 +174,27 @@ class MapManager : NSObject, MGLMapViewDelegate {
         
     }
 
+    func snapshot() -> UIImage {
+        if self.mapView == nil {
+            return UIImage()
+        }
+        
+        UIGraphicsBeginImageContextWithOptions(self.mapView!.bounds.size, true, 0)
+        self.mapView!.drawViewHierarchyInRect(self.mapView!.bounds, afterScreenUpdates: true)
+        let snapshot = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return snapshot
+    }
+    
     // MARK: - MGLMapViewDelegate
+    
+    func mapView(mapView: MGLMapView, regionWillChangeAnimated animated: Bool) {
+        mapOverlay?.fadeOutCurves()
+    }
+    func mapView(mapView: MGLMapView, regionDidChangeAnimated animated: Bool) {
+        mapOverlay?.fadeInCurves()
+    }
     
     func mapViewDidFinishLoadingMap(mapView: MGLMapView) {
         mapIsLoaded = true

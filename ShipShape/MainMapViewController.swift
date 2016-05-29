@@ -12,13 +12,6 @@ import CoreData
 import CoreLocation
 
 
-
-public enum TrackingState: String {
-    case Recording
-    case Anchored
-    case Stopped
-}
-
 private var KVOContext = 0
 
 class MainMapViewController: UIViewController, CLLocationManagerDelegate {
@@ -29,14 +22,9 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
     
     @IBOutlet var mapView: MGLMapView!
     var line: MGLPolyline?
-
-    var activePath: Path?
-    
-    var locationManager = CLLocationManager()
-    
-    var trackingState = TrackingState.Stopped
     
     var mapManager: MapManager?
+    var trackingState = LocationTrackerState.Stopped
     
     @IBOutlet weak var startNewTrackButton: UIButton!
     @IBOutlet weak var followUserButton: UIButton!
@@ -58,53 +46,27 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
         
         
         self.mapManager?.addObserver(self, forKeyPath: "userTrackingMode", options: .New, context: &KVOContext)
-        
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(receiveTrackingStateNotification), name: "shipShape.locationTrackerStateChange", object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(updateRecordingLocations), name: "shipShape.locationTrackerUpdate", object: nil)
 //        
 //        let defaultPath = Path.CreateFromGeoJSONInContext(self.managedObjectContext, filename: "sail") {
 //            self.mapManager?.updateAllPaths()
 //        }
 //        self.mapManager?.addAnnotationForPath(defaultPath)
 //        
-        
-        // Check if there is an open path recording in progress
-        let recordingPaths = Path.FetchPathsWithStateInContext(self.managedObjectContext, state: .Recording)
-        var i = 0
-        for p in recordingPaths {
-            if i == 0 {
-                self.activePath = p
-                self.mapManager?.addAnnotationForPath(self.activePath!)
-                if let annotation = self.mapManager?.pathAnnotations[self.activePath!] {
-                    //self.mapView.showAnnotations([annotation], animated: true)
-                }
                 
-                self.changeTrackingState(.Recording)
-            }
-            else {
-                // Put all but the first recording paths into a fault state-- there should never be more than 1!
-                p.state = PathState.Fault.rawValue
-            }
-            i += 1
-        }
-        
         let allPaths = Path.FetchPathsForSailorInContext(self.managedObjectContext, sailor: Sailor.ActiveSailor!)
         for p in allPaths {
             self.mapManager?.addAnnotationForPath(p)
         }
         
-        appDelegate.saveContext()
-        
-        // For now, automatically open up a new path recording if there isn't a preexisting one
-        if recordingPaths.count == 0 {
-            startRecordingNewTrack()
-        }
-        
-        self.locationManager.delegate = self
-        self.locationManager.distanceFilter = 3
-        self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        self.locationManager.requestAlwaysAuthorization()
-        self.locationManager.pausesLocationUpdatesAutomatically = false
     }
 
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        self.changeTrackingState(LocationTrackerManager.sharedInstance.trackerState)
+    }
+    
     override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
         if context == &KVOContext {
             if keyPath == "userTrackingMode" {
@@ -117,60 +79,37 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
             }
         }
     }
-    // MARK: - CLLocationManagerDelegate
-
-    func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
-        print("didChangeAuthorizationStatus")
-        
-        switch status {
-        case .NotDetermined:
-            print(".NotDetermined")
-            break
-            
-        case .Authorized:
-            print(".Authorized")
-            manager.startUpdatingLocation()
-            break
-        case .Denied:
-            print(".Denied")
-            break
-        default:
-            print("Unhandled authorization status")
-            break
-            
+    
+    // TODO: Receive LocationUpdate notifications 
+    // self.mapManager?.updateAnnotationForPath(self.activePath!)
+    // Also, call changeTrackingState in response to LocationTrackerStateChange notificatons
+    
+    
+    func updateRecordingLocations(notification: NSNotification) {
+       self.mapManager?.updateAnnotationForPath(LocationTrackerManager.sharedInstance.activePath!)
+    }
+    
+    func receiveTrackingStateNotification(notification: NSNotification) {
+        guard let newStateValue = notification.userInfo?["newState"] as? String else {
+            print("Bad state change received from NSNotification")
+            return
         }
-    }
-    
-    func locationManager(manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        // Don't do anything if there is no active path recording
-        if self.activePath == nil { return }
-        
-        // Otherwise create a new Point on the current Path
-        for location in locations {
-        //let location = locations.last! as CLLocation
-            Point.CreateInContext(self.managedObjectContext, location: location, path: self.activePath)
-        }
-        
-        self.appDelegate.saveContext()
-
-        
-        self.mapManager?.updateAnnotationForPath(self.activePath!)
-        
-    }
-    
-    
-    
-    // MARK: - Interface actions
-    @IBAction func unwindToMap(segue: UIStoryboardSegue) {
-        
-    }
-    
-    func changeTrackingState(newState: TrackingState) {
-        if newState == self.trackingState {
+        guard let newState = LocationTrackerState(rawValue: newStateValue) else {
+            print("Bad state change received from NSNotification")
             return
         }
         
-        if self.trackingState == .Stopped && newState == .Recording {
+        self.changeTrackingState(newState)
+
+    }
+    func changeTrackingState(newState: LocationTrackerState) {
+        let oldState = self.trackingState
+        
+        if newState == oldState {
+            return
+        }
+        
+        if oldState == .Stopped && newState == .Recording {
             // Hide + button, show recording buttons
             self.anchorButton.alpha = 0
             self.stopButton.alpha = 0
@@ -193,9 +132,8 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
                 })
             })
             
-            self.locationManager.startUpdatingLocation()
         }
-        else if self.trackingState == .Recording && newState == .Stopped {
+        else if oldState == .Recording && newState == .Stopped {
             // Hide recording buttons, show stop button
             self.startNewTrackButton.alpha = 0
             UIView.animateWithDuration(0.5, animations: {
@@ -216,48 +154,36 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
                     })
             })
             
-            self.locationManager.stopUpdatingLocation()
         }
         
         self.trackingState = newState
     }
     
+    
+    // MARK: - Interface actions
+    @IBAction func unwindToMap(segue: UIStoryboardSegue) {
+        
+    }
     @IBAction func startRecordingNewTrack(sender: AnyObject? = nil) {
-        self.changeTrackingState(.Recording)
-        self.activePath = Path.CreateInContext(self.managedObjectContext, title: "Active Route", state: .Recording , vessel: .ActiveVessel, creator: .ActiveSailor)
-        appDelegate.saveContext()
-        
-        self.mapManager?.addAnnotationForPath(self.activePath!)
-        
+        LocationTrackerManager.sharedInstance.changeState(.Recording)
     }
     
     @IBAction func stopRecordingTrack(sender: AnyObject? = nil) {
-        self.changeTrackingState(.Stopped)
-        self.activePath?.state = PathState.Complete.rawValue
-        //self.mapManager?.removeAnnotationForPath(self.activePath!)
-        
-        appDelegate.saveContext()
-        self.activePath = nil
-        
+        LocationTrackerManager.sharedInstance.changeState(.Stopped)
     }
     
     @IBAction func toggleStats(sender: AnyObject? = nil) {
-        self.mapManager?.updateAllPaths()
-        self.activePath?.recalculateStats()
-        print("Total Time: \(self.activePath?.totalTime)")
-        print("Total Distance: \(self.activePath?.totalDistance)")
-        print("Average Speed: \(self.activePath?.averageSpeed)")
-        print("Points: \(self.activePath?.points?.count)")
-        
-        if self.activePath != nil {
-            
+        //self.mapManager?.updateAllPaths()
+        if let activePath = LocationTrackerManager.sharedInstance.activePath {
+            activePath.recalculateStats()
+
             let nf = NSNumberFormatter()
             nf.numberStyle = NSNumberFormatterStyle.DecimalStyle
             nf.maximumFractionDigits = 2
             
-            let time = nf.stringFromNumber(self.activePath!.totalTime! as Double / 60.0)!
-            let distance = nf.stringFromNumber(metersToNauticalMiles(self.activePath!.totalDistance!))!
-            let speed = nf.stringFromNumber(metersPerSecondToKnots(self.activePath!.averageSpeed!))!
+            let time = nf.stringFromNumber(activePath.totalTime! as Double / 60.0)!
+            let distance = nf.stringFromNumber(metersToNauticalMiles(activePath.totalDistance!))!
+            let speed = nf.stringFromNumber(metersPerSecondToKnots(activePath.averageSpeed!))!
             self.statsLabel.text = "\(time) min\n\(distance) NM\n \(speed) kts"
         }
     }

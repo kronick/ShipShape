@@ -42,6 +42,8 @@
 		90ED4B051CF6BAEF00394401 /* icon-hamburger-on@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4B031CF6BAEE00394401 /* icon-hamburger-on@2x.png */; };
 		90ED4B071CF784C800394401 /* TrackListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4B061CF784C700394401 /* TrackListViewController.swift */; };
 		90ED4B091CF905D800394401 /* TrackDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4B081CF905D700394401 /* TrackDetailViewController.swift */; };
+		90ED4B0B1CF9420800394401 /* AnimatedMapOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4B0A1CF9420800394401 /* AnimatedMapOverlay.swift */; };
+		90ED4B0D1CFB823700394401 /* LocationTrackerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4B0C1CFB823600394401 /* LocationTrackerManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -94,6 +96,8 @@
 		90ED4B031CF6BAEE00394401 /* icon-hamburger-on@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-hamburger-on@2x.png"; sourceTree = "<group>"; };
 		90ED4B061CF784C700394401 /* TrackListViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TrackListViewController.swift; sourceTree = "<group>"; };
 		90ED4B081CF905D700394401 /* TrackDetailViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TrackDetailViewController.swift; sourceTree = "<group>"; };
+		90ED4B0A1CF9420800394401 /* AnimatedMapOverlay.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnimatedMapOverlay.swift; sourceTree = "<group>"; };
+		90ED4B0C1CFB823600394401 /* LocationTrackerManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocationTrackerManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -135,7 +139,9 @@
 				90ED4AA51CF1622F00394401 /* Utilities.swift */,
 				90ED4AA21CF161EB00394401 /* tracks */,
 				903DEBAB1CF16048009EDCA0 /* MainMapViewController.swift */,
+				90ED4B0C1CFB823600394401 /* LocationTrackerManager.swift */,
 				90ED4AEB1CF39AB400394401 /* MapManager.swift */,
+				90ED4B0A1CF9420800394401 /* AnimatedMapOverlay.swift */,
 				90ED4B061CF784C700394401 /* TrackListViewController.swift */,
 				90ED4B081CF905D700394401 /* TrackDetailViewController.swift */,
 				903DEBAD1CF16048009EDCA0 /* Main.storyboard */,
@@ -293,10 +299,12 @@
 				90ED4AEC1CF39AB400394401 /* MapManager.swift in Sources */,
 				90ED4B091CF905D800394401 /* TrackDetailViewController.swift in Sources */,
 				90ED4ACE1CF273D100394401 /* Sailor+CoreDataProperties.swift in Sources */,
+				90ED4B0B1CF9420800394401 /* AnimatedMapOverlay.swift in Sources */,
 				90ED4ACB1CF273D100394401 /* Point.swift in Sources */,
 				903DEBB21CF16048009EDCA0 /* ShipShape.xcdatamodeld in Sources */,
 				90ED4ACA1CF273D100394401 /* Point+CoreDataProperties.swift in Sources */,
 				90ED4AC91CF273D100394401 /* Vessel.swift in Sources */,
+				90ED4B0D1CFB823700394401 /* LocationTrackerManager.swift in Sources */,
 				903DEBAC1CF16048009EDCA0 /* MainMapViewController.swift in Sources */,
 				90ED4B071CF784C800394401 /* TrackListViewController.swift in Sources */,
 				90ED4AA61CF1622F00394401 /* Utilities.swift in Sources */,

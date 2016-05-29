@@ -8,12 +8,13 @@
 
 import UIKit
 import CoreData
+import CoreLocation
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
-
+    var locationTrackerManager = LocationTrackerManager.sharedInstance
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.
@@ -67,6 +68,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         print("Current Sailor: \(Sailor.ActiveSailor?.username)\nCurrent Vessel: \(Vessel.ActiveVessel?.name)")
         
+        
+        locationTrackerManager.initialize()
         
         return true
     }
@@ -158,5 +161,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
     }
 
+    
+    
 }
 
