@@ -54,7 +54,7 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
 //        }
 //        self.mapManager?.addAnnotationForPath(defaultPath)
 //        
-                
+        
         let allPaths = Path.FetchPathsForSailorInContext(self.managedObjectContext, sailor: Sailor.ActiveSailor!)
         for p in allPaths {
             self.mapManager?.addAnnotationForPath(p)
@@ -161,6 +161,7 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
     
     
     // MARK: - Interface actions
+    
     @IBAction func unwindToMap(segue: UIStoryboardSegue) {
         
     }
@@ -203,6 +204,11 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
+    }
+    
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(self)
+        self.mapManager?.removeObserver(self, forKeyPath: "userTrackingMode")
     }
 
 

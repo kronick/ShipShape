@@ -15,6 +15,8 @@ class MapManager : NSObject, MGLMapViewDelegate {
     
     var pathAnnotations = [Path:PathAnnotation]()   // Holds a list of PathAnnotations indexed by Path instances
     var pathAnnotationSegmentStyles = [MGLPolyline:PathAnnotationSegmentStyle]()    // Holds style info for each path segment. Must be updated in concert with pathAnnotations!!
+    var tappablePathPoints = [(CGPoint, Path)]()  // Holds a list of points that are currently on screen and potentially tappable
+    var selectedPointAnnotation: MGLPointAnnotation?
     var mapView: MGLMapView? = nil
     var mapIsLoaded = false
     var mapOverlay: AnimatedMapOverlay?
@@ -22,6 +24,10 @@ class MapManager : NSObject, MGLMapViewDelegate {
     var initialAnnotationsToDisplay: [MGLPolyline]
     var initialEdgePadding = UIEdgeInsetsZero
     var initialAnnotationsAnimated = false
+    
+    var tracksAreTappable = true
+    let tappableThresholdSquared = 400 as CGFloat
+
     
     dynamic var userTrackingMode: MGLUserTrackingMode = .None   // dynamic so this can be KVO'ed
     
@@ -36,6 +42,18 @@ class MapManager : NSObject, MGLMapViewDelegate {
         self.mapView?.addSubview(self.mapOverlay!)
         
         self.mapView?.delegate = self
+        
+        // Set up tap gesture to select routes
+        // But first set up a double tap that does nothing, just so we can ignore it and Mapbox's double tap handling
+        let doubleTapGesture = UITapGestureRecognizer(target: self, action: nil)
+        doubleTapGesture.numberOfTapsRequired = 2
+        self.mapView?.addGestureRecognizer(doubleTapGesture)
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(viewWasTappedByGestureRecognizer))
+        tapGesture.numberOfTapsRequired = 1
+        //tapGesture.requireGestureRecognizerToFail(doubleTapGesture)
+        self.mapView?.addGestureRecognizer(tapGesture)
+        
     }
     
     func clearAnnotations() {
@@ -71,6 +89,115 @@ class MapManager : NSObject, MGLMapViewDelegate {
         
         // Force view refresh
         mapView?.centerCoordinate = CLLocationCoordinate2D(latitude: mapView!.centerCoordinate.latitude, longitude: mapView!.centerCoordinate.longitude)
+    }
+    
+    func updateTappablePoints() {
+        guard self.mapView != nil else { return }
+        
+        // Loop through all paths and convert their points to coordinates in the map view
+        // Filter out points that are very close to each other
+        // TODO: add intermediate points to long segments
+        
+        self.tappablePathPoints.removeAll()
+        
+        // Do this calculation on a background thread
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0)) { [unowned self] in
+            var newTappablePathPoints = [(CGPoint, Path)]()
+            let paths = self.pathAnnotations.keys
+            
+            for path in paths {
+                var lastPoint: CGPoint? = nil   // Used to calculate segment distance
+                if let points = path.points {
+                    for p in points {
+                        if let point = p as? Point {
+                            let coordinate = CLLocationCoordinate2D(latitude: point.latitude! as Double, longitude: point.longitude! as Double)
+                            let position = self.mapView!.convertCoordinate(coordinate, toPointToView: self.mapView)
+                        
+                            // Filter out points that are very close together
+                            var addPoint = false
+                            var distanceSquared: CGFloat?
+                            if let last = lastPoint {
+                                distanceSquared = (last.x-position.x)*(last.x-position.x) + (last.y-position.y)*(last.y-position.y)
+                                if distanceSquared > 64 {
+                                    addPoint = true
+                                }
+                            }
+                            else {
+                                addPoint = true
+                            }
+                            if addPoint {
+                                if self.mapView!.frame.contains(position) {
+                                   newTappablePathPoints.append((position, path))
+                                }
+                                lastPoint = position
+                            }
+                    
+                        }
+                        
+                    }
+                    
+                    // Add the points back in on the main thread
+                    dispatch_async(dispatch_get_main_queue()) { [unowned self] in
+                        self.tappablePathPoints = newTappablePathPoints
+                    }
+                }
+            }
+        }
+    }
+    
+    func viewWasTappedByGestureRecognizer(recognizer: UITapGestureRecognizer) {
+        guard let mapView = self.mapView else { return }
+        
+        let location = recognizer.locationInView(mapView)
+        
+        // Remove old annotation
+        if let selectedPointAnnotation = self.selectedPointAnnotation {
+            mapView.removeAnnotation(selectedPointAnnotation)
+        }
+        
+        // Look up the closest path/point in a background thread
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0)) { [unowned self] in
+            var closestDistance = CGFloat.max
+            var closestPath: Path? = nil
+            var closestPoint: CGPoint? = nil
+            
+            for pathPoint in self.tappablePathPoints {
+                let p = pathPoint.0
+                let path = pathPoint.1
+                
+                let distanceSquared = (location.x - p.x) * (location.x - p.x) + (location.y - p.y) * (location.y - p.y)
+                if distanceSquared < self.tappableThresholdSquared && distanceSquared < closestDistance {
+                    closestPath = path
+                    closestDistance = distanceSquared
+                    closestPoint = p
+                }
+            }
+            
+            if let closestPath = closestPath, closestPoint = closestPoint {
+                print(closestPath.title)
+                // Create a new point annotation
+                self.selectedPointAnnotation = MGLPointAnnotation()
+                self.selectedPointAnnotation?.coordinate = mapView.convertPoint(closestPoint, toCoordinateFromView: mapView)
+                if let title = closestPath.title {
+                    self.selectedPointAnnotation?.title = title
+                }
+                if let date = closestPath.created {
+                    let dateFormatter = NSDateFormatter()
+                    dateFormatter.dateStyle = .MediumStyle
+                    dateFormatter.timeStyle = .ShortStyle
+                    
+                    self.selectedPointAnnotation?.subtitle = dateFormatter.stringFromDate(date)
+                }
+                
+                dispatch_async(dispatch_get_main_queue()) { [unowned self] in
+                    if let selectedPointAnnotation = self.selectedPointAnnotation {
+                        mapView.addAnnotation(selectedPointAnnotation)
+                        mapView.selectAnnotation(selectedPointAnnotation, animated: true)
+                    }
+                }
+            }
+        }
+
     }
     
     func addAnnotationForPath(path: Path) {
@@ -168,7 +295,7 @@ class MapManager : NSObject, MGLMapViewDelegate {
             style.lineWidth = 5.0
         }
         
-        style.strokeColor = UIColor(red: CGFloat.random(0,1), green: CGFloat.random(0,1), blue: CGFloat.random(0,1), alpha: 1.0)
+        style.strokeColor = UIColor(red: CGFloat.random(0.3,1), green: CGFloat.random(0.3,1), blue: CGFloat.random(0.3,1), alpha: 1.0)
         
         return style
         
@@ -187,6 +314,10 @@ class MapManager : NSObject, MGLMapViewDelegate {
         return snapshot
     }
     
+    
+    
+    
+    
     // MARK: - MGLMapViewDelegate
     
     func mapView(mapView: MGLMapView, regionWillChangeAnimated animated: Bool) {
@@ -194,6 +325,7 @@ class MapManager : NSObject, MGLMapViewDelegate {
     }
     func mapView(mapView: MGLMapView, regionDidChangeAnimated animated: Bool) {
         mapOverlay?.fadeInCurves()
+        self.updateTappablePoints()
     }
     
     func mapViewDidFinishLoadingMap(mapView: MGLMapView) {
@@ -257,7 +389,6 @@ class MapManager : NSObject, MGLMapViewDelegate {
     func mapView(mapView: MGLMapView, tapOnCalloutForAnnotation annotation: MGLAnnotation) {
         
     }
-    
 }
 
 public enum PathAnnotationState {

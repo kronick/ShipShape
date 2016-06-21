@@ -38,6 +38,20 @@ class LocationTrackerManager : NSObject, CLLocationManagerDelegate {
         self.appDelegate =  UIApplication.sharedApplication().delegate as! AppDelegate
         self.managedObjectContext = (UIApplication.sharedApplication().delegate as! AppDelegate).managedObjectContext
     
+        self.locationManager.delegate = self
+        self.locationManager.distanceFilter = 3
+        self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        self.locationManager.requestAlwaysAuthorization()
+        
+    
+        if #available(iOS 9.0, *) {
+            self.locationManager.allowsBackgroundLocationUpdates = true
+        } else {
+            // Fallback on earlier versions
+        }
+        self.locationManager.pausesLocationUpdatesAutomatically = false
+
+        
         // Check if there is an open path recording in progress
         let recordingPaths = Path.FetchPathsWithStateInContext(self.managedObjectContext, state: .Recording)
         var i = 0
@@ -56,11 +70,6 @@ class LocationTrackerManager : NSObject, CLLocationManagerDelegate {
 
         appDelegate.saveContext()
         
-        self.locationManager.delegate = self
-        self.locationManager.distanceFilter = 3
-        self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        self.locationManager.requestAlwaysAuthorization()
-        self.locationManager.pausesLocationUpdatesAutomatically = false
     }
     
     func changeState(newState: LocationTrackerState) {
@@ -72,8 +81,10 @@ class LocationTrackerManager : NSObject, CLLocationManagerDelegate {
         
         if oldState == .Stopped && newState == .Recording {
             // Start a new recording
-            self.activePath = Path.CreateInContext(self.managedObjectContext, title: "Active Route", state: .Recording , vessel: .ActiveVessel, creator: .ActiveSailor)
-            appDelegate.saveContext()
+            if self.activePath == nil {
+                self.activePath = Path.CreateInContext(self.managedObjectContext, title: "Active Route", state: .Recording , vessel: .ActiveVessel, creator: .ActiveSailor)
+                appDelegate.saveContext()
+            }
             
             self.locationManager.startUpdatingLocation()
             
