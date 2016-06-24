@@ -11,7 +11,7 @@ import UIKit
 import Mapbox
 
 class AnimatedMapOverlay : UIView {
-    
+    let duplicatePointDistanceSquared = 8*8 as CGFloat
     var curves: [UIBezierPath]
     var animations: [CAKeyframeAnimation]
     var boatViews = [UITextView]()
@@ -65,7 +65,7 @@ class AnimatedMapOverlay : UIView {
                                 var addPoint = false
                                 if let last = lastPoint {
                                     let distanceSquared = (last.x-position.x)*(last.x-position.x) + (last.y-position.y)*(last.y-position.y)
-                                    if distanceSquared > 64 {
+                                    if distanceSquared > self.duplicatePointDistanceSquared {
                                         addPoint = true
                                     }
                                 }
@@ -119,9 +119,11 @@ class AnimatedMapOverlay : UIView {
         boatView.alpha = 0
         boatView.opaque = false
         boatView.backgroundColor = UIColor.clearColor()
+        boatView.textColor = UIColor.whiteColor()
+        
         
         boatView.scrollEnabled = false
-        boatView.font = UIFont(name: "Apple Color Emoji", size: 36)
+        boatView.font = UIFont(name: "Apple Color Emoji", size: 18)
 
         self.mapManager.mapView?.addSubview(boatView)
     
@@ -133,10 +135,14 @@ class AnimatedMapOverlay : UIView {
         animation.path = curve.CGPath;
         //animation.rotationMode = kCAAnimationRotateAuto
         animation.calculationMode = kCAAnimationCubicPaced
+    
         animation.removedOnCompletion = true
         animation.repeatCount = 1
         //animation.beginTime = Double.random(0,3)
-        animation.duration = Double.random(10,14)
+        //animation.duration = Double.random(10,14)
+        
+        animation.duration = Double.random(2,3)
+        
         
         boatView.layer.addAnimation(animation, forKey: "move")
         
@@ -147,7 +153,7 @@ class AnimatedMapOverlay : UIView {
             boatView.alpha = 1.0 as CGFloat
         }, completion: nil)
         // Fade out and remove when done
-        UIView.animateWithDuration(0.5, delay: animation.duration - 0.5, options: [], animations: {
+        UIView.animateWithDuration(0.5, delay: (animation.beginTime + animation.duration * Double(animation.repeatCount)) - 0.5, options: [], animations: {
             boatView.alpha = 0
             }, completion: { (b) -> Void in
                 boatView.removeFromSuperview()

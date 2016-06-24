@@ -16,6 +16,7 @@
 		903DEBBF1CF16053009EDCA0 /* Mapbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 903DEBBE1CF16053009EDCA0 /* Mapbox.framework */; };
 		903DEBC01CF16060009EDCA0 /* Mapbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 903DEBBE1CF16053009EDCA0 /* Mapbox.framework */; };
 		903DEBC11CF16060009EDCA0 /* Mapbox.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 903DEBBE1CF16053009EDCA0 /* Mapbox.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		9080195F1D1DBE4F00C25BEA /* RemoteAPIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9080195E1D1DBE4F00C25BEA /* RemoteAPIManager.swift */; };
 		90ED4AA41CF161F200394401 /* sail.geojson in Resources */ = {isa = PBXBuildFile; fileRef = 90ED4AA31CF161F200394401 /* sail.geojson */; };
 		90ED4AA61CF1622F00394401 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AA51CF1622F00394401 /* Utilities.swift */; };
 		90ED4AC81CF273D100394401 /* Vessel+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90ED4AC01CF273D100394401 /* Vessel+CoreDataProperties.swift */; };
@@ -70,6 +71,7 @@
 		903DEBB61CF16048009EDCA0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		903DEBB81CF16048009EDCA0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		903DEBBE1CF16053009EDCA0 /* Mapbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Mapbox.framework; sourceTree = "<group>"; };
+		9080195E1D1DBE4F00C25BEA /* RemoteAPIManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteAPIManager.swift; sourceTree = "<group>"; };
 		90ED4AA31CF161F200394401 /* sail.geojson */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sail.geojson; sourceTree = "<group>"; };
 		90ED4AA51CF1622F00394401 /* Utilities.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		90ED4AC01CF273D100394401 /* Vessel+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "Vessel+CoreDataProperties.swift"; path = "ShipShape/Vessel+CoreDataProperties.swift"; sourceTree = "<group>"; };
@@ -141,6 +143,7 @@
 				903DEBAB1CF16048009EDCA0 /* MainMapViewController.swift */,
 				90ED4B0C1CFB823600394401 /* LocationTrackerManager.swift */,
 				90ED4AEB1CF39AB400394401 /* MapManager.swift */,
+				9080195E1D1DBE4F00C25BEA /* RemoteAPIManager.swift */,
 				90ED4B0A1CF9420800394401 /* AnimatedMapOverlay.swift */,
 				90ED4B061CF784C700394401 /* TrackListViewController.swift */,
 				90ED4B081CF905D700394401 /* TrackDetailViewController.swift */,
@@ -305,6 +308,7 @@
 				90ED4ACA1CF273D100394401 /* Point+CoreDataProperties.swift in Sources */,
 				90ED4AC91CF273D100394401 /* Vessel.swift in Sources */,
 				90ED4B0D1CFB823700394401 /* LocationTrackerManager.swift in Sources */,
+				9080195F1D1DBE4F00C25BEA /* RemoteAPIManager.swift in Sources */,
 				903DEBAC1CF16048009EDCA0 /* MainMapViewController.swift in Sources */,
 				90ED4B071CF784C800394401 /* TrackListViewController.swift in Sources */,
 				90ED4AA61CF1622F00394401 /* Utilities.swift in Sources */,

@@ -292,7 +292,7 @@ class MapManager : NSObject, MGLMapViewDelegate {
 
         if sailor == Sailor.ActiveSailor {
             style.strokeColor = UIColor(red: 0.94, green: 0.30, blue: 0.30, alpha: 1)
-            style.lineWidth = 5.0
+            style.lineWidth = 1.0
         }
         
         style.strokeColor = UIColor(red: CGFloat.random(0.3,1), green: CGFloat.random(0.3,1), blue: CGFloat.random(0.3,1), alpha: 1.0)
