@@ -36,6 +36,12 @@ class TrackDetailViewController: UIViewController {
         mapView.setUserTrackingMode(MGLUserTrackingMode.Follow, animated: true)
         self.mapManager = MapManager(mapView: self.mapView)
         
+        // TODO: Don't do this here
+        // Upload path upon viewing
+        if let path = self.activePath {
+            RemoteAPIManager.sharedInstance.createPath(path)
+        }
+        
         if let t = self.activePath?.title {
             self.title = t
             self.pathTitleField.text = t

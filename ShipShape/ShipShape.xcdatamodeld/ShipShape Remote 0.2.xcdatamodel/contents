@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="10171" systemVersion="15D21" minimumToolsVersion="Automatic">
+    <entity name="Path" representedClassName=".Path" syncable="YES">
+        <attribute name="averageSpeed" optional="YES" attributeType="Float" defaultValueString="0.0" syncable="YES"/>
+        <attribute name="created" optional="YES" attributeType="Date" syncable="YES"/>
+        <attribute name="globalID" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="notes" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="state" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="title" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="totalDistance" optional="YES" attributeType="Float" defaultValueString="0.0" syncable="YES"/>
+        <attribute name="totalTime" optional="YES" attributeType="Float" defaultValueString="0.0" syncable="YES"/>
+        <attribute name="type" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="creator" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Sailor" inverseName="paths" inverseEntity="Sailor" syncable="YES"/>
+        <relationship name="points" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="Point" inverseName="path" inverseEntity="Point" syncable="YES"/>
+        <relationship name="vessel" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Vessel" inverseName="paths" inverseEntity="Vessel" syncable="YES"/>
+    </entity>
+    <entity name="Point" representedClassName=".Point" syncable="YES">
+        <attribute name="created" attributeType="Date" syncable="YES"/>
+        <attribute name="globalID" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="latitude" attributeType="Double" defaultValueString="0.0" syncable="YES"/>
+        <attribute name="longitude" attributeType="Double" defaultValueString="0.0" syncable="YES"/>
+        <attribute name="notes" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="propulsion" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="path" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Path" inverseName="points" inverseEntity="Path" syncable="YES"/>
+    </entity>
+    <entity name="Sailor" representedClassName=".Sailor" syncable="YES">
+        <attribute name="profile" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="realName" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="username" attributeType="String" indexed="YES" syncable="YES"/>
+        <relationship name="paths" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Path" inverseName="creator" inverseEntity="Path" syncable="YES"/>
+        <relationship name="vessels" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Vessel" inverseName="owner" inverseEntity="Vessel" syncable="YES"/>
+    </entity>
+    <entity name="Vessel" representedClassName=".Vessel" syncable="YES">
+        <attribute name="globalID" optional="YES" attributeType="Integer 64" defaultValueString="0" syncable="YES"/>
+        <attribute name="length" optional="YES" attributeType="Float" defaultValueString="0.0" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="notes" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="propulsion" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="yearBuilt" optional="YES" attributeType="Integer 16" defaultValueString="0" syncable="YES"/>
+        <relationship name="owner" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Sailor" inverseName="vessels" inverseEntity="Sailor" syncable="YES"/>
+        <relationship name="paths" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Path" inverseName="vessel" inverseEntity="Path" syncable="YES"/>
+    </entity>
+    <elements>
+        <element name="Path" positionX="-36" positionY="-43" width="128" height="223"/>
+        <element name="Point" positionX="151" positionY="-40" width="128" height="148"/>
+        <element name="Vessel" positionX="-243" positionY="-90" width="128" height="163"/>
+        <element name="Sailor" positionX="-38" positionY="-229" width="128" height="118"/>
+    </elements>
+</model>

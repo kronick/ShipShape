@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7D4D4D7C956E6FB03A78AD25 /* Pods_ShipShape.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DD18AE4F97D136624C2FF225 /* Pods_ShipShape.framework */; };
 		903DEBAA1CF16048009EDCA0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 903DEBA91CF16048009EDCA0 /* AppDelegate.swift */; };
 		903DEBAC1CF16048009EDCA0 /* MainMapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 903DEBAB1CF16048009EDCA0 /* MainMapViewController.swift */; };
 		903DEBAF1CF16048009EDCA0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 903DEBAD1CF16048009EDCA0 /* Main.storyboard */; };
@@ -62,6 +63,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		9022742E1D1DED21008E1B83 /* ShipShape Remote 0.2.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "ShipShape Remote 0.2.xcdatamodel"; sourceTree = "<group>"; };
 		903DEBA61CF16048009EDCA0 /* ShipShape.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShipShape.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		903DEBA91CF16048009EDCA0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		903DEBAB1CF16048009EDCA0 /* MainMapViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMapViewController.swift; sourceTree = "<group>"; };
@@ -100,6 +102,9 @@
 		90ED4B081CF905D700394401 /* TrackDetailViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TrackDetailViewController.swift; sourceTree = "<group>"; };
 		90ED4B0A1CF9420800394401 /* AnimatedMapOverlay.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnimatedMapOverlay.swift; sourceTree = "<group>"; };
 		90ED4B0C1CFB823600394401 /* LocationTrackerManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocationTrackerManager.swift; sourceTree = "<group>"; };
+		DA657007EBE6AECD2209D92B /* Pods-ShipShape.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ShipShape.release.xcconfig"; path = "Pods/Target Support Files/Pods-ShipShape/Pods-ShipShape.release.xcconfig"; sourceTree = "<group>"; };
+		DD18AE4F97D136624C2FF225 /* Pods_ShipShape.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ShipShape.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		EF8172C778993594B34B08B0 /* Pods-ShipShape.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ShipShape.debug.xcconfig"; path = "Pods/Target Support Files/Pods-ShipShape/Pods-ShipShape.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -109,18 +114,30 @@
 			files = (
 				903DEBBF1CF16053009EDCA0 /* Mapbox.framework in Frameworks */,
 				903DEBC01CF16060009EDCA0 /* Mapbox.framework in Frameworks */,
+				7D4D4D7C956E6FB03A78AD25 /* Pods_ShipShape.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5D6B7A67367DFD1BC46FA460 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				EF8172C778993594B34B08B0 /* Pods-ShipShape.debug.xcconfig */,
+				DA657007EBE6AECD2209D92B /* Pods-ShipShape.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
 		903DEB9D1CF16048009EDCA0 = {
 			isa = PBXGroup;
 			children = (
 				903DEBBE1CF16053009EDCA0 /* Mapbox.framework */,
 				903DEBA81CF16048009EDCA0 /* ShipShape */,
 				903DEBA71CF16048009EDCA0 /* Products */,
+				5D6B7A67367DFD1BC46FA460 /* Pods */,
+				DB1C46A179A82B3E90219C14 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -209,6 +226,14 @@
 			path = ../graphics;
 			sourceTree = "<group>";
 		};
+		DB1C46A179A82B3E90219C14 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				DD18AE4F97D136624C2FF225 /* Pods_ShipShape.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -216,10 +241,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 903DEBBB1CF16048009EDCA0 /* Build configuration list for PBXNativeTarget "ShipShape" */;
 			buildPhases = (
+				DBE4F80E4155F1B49D7EC4E4 /* [CP] Check Pods Manifest.lock */,
 				903DEBA21CF16048009EDCA0 /* Sources */,
 				903DEBA31CF16048009EDCA0 /* Frameworks */,
 				903DEBA41CF16048009EDCA0 /* Resources */,
 				903DEBC21CF16060009EDCA0 /* Embed Frameworks */,
+				DE79BAFECF61BCFF24A67D96 /* [CP] Embed Pods Frameworks */,
+				C4CB70BBCB7AFF5863A7130B /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -293,6 +321,54 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		C4CB70BBCB7AFF5863A7130B /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-ShipShape/Pods-ShipShape-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		DBE4F80E4155F1B49D7EC4E4 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		DE79BAFECF61BCFF24A67D96 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-ShipShape/Pods-ShipShape-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		903DEBA21CF16048009EDCA0 /* Sources */ = {
@@ -430,6 +506,7 @@
 		};
 		903DEBBC1CF16048009EDCA0 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = EF8172C778993594B34B08B0 /* Pods-ShipShape.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -446,6 +523,7 @@
 		};
 		903DEBBD1CF16048009EDCA0 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = DA657007EBE6AECD2209D92B /* Pods-ShipShape.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -487,6 +565,7 @@
 		903DEBB01CF16048009EDCA0 /* ShipShape.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
+				9022742E1D1DED21008E1B83 /* ShipShape Remote 0.2.xcdatamodel */,
 				903DEBB11CF16048009EDCA0 /* ShipShape.xcdatamodel */,
 			);
 			currentVersion = 903DEBB11CF16048009EDCA0 /* ShipShape.xcdatamodel */;
