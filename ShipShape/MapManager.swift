@@ -28,6 +28,16 @@ class MapManager : NSObject, MGLMapViewDelegate {
     var tracksAreTappable = true
     let tappableThresholdSquared = 400 as CGFloat
 
+    var colorIndexer = 0 as Int
+    var colorPalette = [
+        UIColor(red: 238/255, green: 62/255, blue: 62/255, alpha: 1),
+        UIColor(red: 236/255, green: 136/255, blue: 34/255, alpha: 1),
+        UIColor(red: 247/255, green: 255/255, blue: 0/255, alpha: 1),
+        UIColor(red: 56/255, green: 199/255, blue: 46/255, alpha: 1),
+        UIColor(red: 104/255, green: 181/255, blue: 230/255, alpha: 1),
+        UIColor(red: 215/255, green: 209/255, blue: 255/255, alpha: 1),
+        UIColor(red: 223/255, green: 62/255, blue: 238/255, alpha: 1)
+    ]
     
     dynamic var userTrackingMode: MGLUserTrackingMode = .None   // dynamic so this can be KVO'ed
     
@@ -57,12 +67,15 @@ class MapManager : NSObject, MGLMapViewDelegate {
     }
     
     func clearAnnotations() {
+        // Remove all paths and reset color index
+        self.colorIndexer = 0
         for path in pathAnnotations.keys {
             removeAnnotationForPath(path)
         }
     }
     
     func showPaths(paths: [Path], animated: Bool = true, padding: UIEdgeInsets = UIEdgeInsetsMake(20, 20, 20, 20)) {
+    
         var annotations = [MGLPolyline]()
         for p in paths {
             if let pathAnnotation = self.pathAnnotations[p] {
@@ -201,9 +214,10 @@ class MapManager : NSObject, MGLMapViewDelegate {
     }
     
     func addAnnotationForPath(path: Path) {
-        updateAnnotationForPath(path)
+        updateAnnotationForPath(path, colorIndex: self.colorIndexer)
+        self.colorIndexer += 1
     }
-    func updateAnnotationForPath(path: Path) {
+    func updateAnnotationForPath(path: Path, colorIndex: Int? = nil) {
         // Remove the old annotation from the map view
         if let oldAnnotationSegments = pathAnnotations[path]?.segments {
             for segment in oldAnnotationSegments {
@@ -213,8 +227,9 @@ class MapManager : NSObject, MGLMapViewDelegate {
             }
         }
 
+        
         // Try to create a new path and add it to the map view
-        let newSegments = generateAnnotationSegmentsForPath(path)
+        let newSegments = generateAnnotationSegmentsForPath(path, colorIndex: colorIndex == nil ? self.colorIndexer : colorIndex!)
         pathAnnotations[path] = PathAnnotation(path: path, segments: newSegments, state: .Complete, sailor: path.creator)
         
         mapView?.addOverlays(newSegments.map({$0.polyline}))
@@ -234,7 +249,7 @@ class MapManager : NSObject, MGLMapViewDelegate {
     }
     
     
-    func generateAnnotationSegmentsForPath(path: Path) -> [PathAnnotationSegment] {
+    func generateAnnotationSegmentsForPath(path: Path, colorIndex: Int) -> [PathAnnotationSegment] {
         if let points = path.points {
         
             var annotationSegments = [PathAnnotationSegment]()
@@ -252,7 +267,7 @@ class MapManager : NSObject, MGLMapViewDelegate {
                     if newPropulsion != currentPropulsion {
                         // Propulsion method has changed, create a new segment
                         let line = MGLPolyline(coordinates: &currentCoordinates, count: UInt(currentCoordinates.count))
-                        let completedSegment = PathAnnotationSegment(propulsion: currentPropulsion!, polyline: line)
+                        let completedSegment = PathAnnotationSegment(propulsion: currentPropulsion!, polyline: line, parent: path, colorIndex: colorIndex)
                         annotationSegments.append(completedSegment)
                         
                         // Calculate line style
@@ -269,7 +284,7 @@ class MapManager : NSObject, MGLMapViewDelegate {
             
             // Wrap up final segment
             let line = MGLPolyline(coordinates: &currentCoordinates, count: UInt(currentCoordinates.count))
-            let completedSegment = PathAnnotationSegment(propulsion: currentPropulsion, polyline: line)
+            let completedSegment = PathAnnotationSegment(propulsion: currentPropulsion, polyline: line, parent: path, colorIndex: colorIndex)
             annotationSegments.append(completedSegment)
             
             // Calculate line style
@@ -283,7 +298,7 @@ class MapManager : NSObject, MGLMapViewDelegate {
         // No path or points
         var coordinates = [CLLocationCoordinate2D]()
         let emptyLine = MGLPolyline(coordinates: &coordinates, count: 0)
-        let emptyPathAnnotationSegment = PathAnnotationSegment(propulsion: .None, polyline: emptyLine)
+        let emptyPathAnnotationSegment = PathAnnotationSegment(propulsion: .None, polyline: emptyLine, parent: path, colorIndex: colorIndex)
         return[emptyPathAnnotationSegment]
     }
     
@@ -292,10 +307,11 @@ class MapManager : NSObject, MGLMapViewDelegate {
 
         if sailor == Sailor.ActiveSailor {
             style.strokeColor = UIColor(red: 0.94, green: 0.30, blue: 0.30, alpha: 1)
-            style.lineWidth = 1.0
+            style.lineWidth = 3.0
         }
         
-        style.strokeColor = UIColor(red: CGFloat.random(0.3,1), green: CGFloat.random(0.3,1), blue: CGFloat.random(0.3,1), alpha: 1.0)
+        //style.strokeColor = UIColor(red: CGFloat.random(0.3,1), green: CGFloat.random(0.3,1), blue: CGFloat.random(0.3,1), alpha: 1.0)
+        style.strokeColor = self.colorPalette[segment.colorIndex % self.colorPalette.count]
         
         return style
         
@@ -361,13 +377,8 @@ class MapManager : NSObject, MGLMapViewDelegate {
                 return style.strokeColor
             }
         }
+        return UIColor.blueColor()
         
-        if(annotation.title == "A polyline" && annotation is MGLPolyline) {
-            return UIColor(red: 0.94, green: 0.30, blue: 0.30, alpha: 1)
-        }
-        else {
-            return UIColor.blueColor()
-        }
     }
     
     func mapView(mapView: MGLMapView, annotationCanShowCallout annotation: MGLAnnotation) -> Bool {
@@ -405,6 +416,8 @@ struct PathAnnotation {
 struct PathAnnotationSegment {
     var propulsion: PropulsionMethod?
     var polyline: MGLPolyline
+    var parent: Path?
+    var colorIndex: Int
 }
 struct PathAnnotationSegmentStyle {
     var alpha: CGFloat = 1.0

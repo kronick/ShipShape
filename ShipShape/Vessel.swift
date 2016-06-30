@@ -13,13 +13,13 @@ import CoreData
 class Vessel: NSManagedObject {
     static var ActiveVessel: Vessel?
         
-    class func CreateInContext(moc: NSManagedObjectContext, name: String, propulsion: String? = nil, length: NSNumber? = nil, yearBuilt: NSNumber? = nil, globalID: NSNumber? = nil, notes: String? = nil, owner: Sailor? = nil) -> Vessel {
+    class func CreateInContext(moc: NSManagedObjectContext, name: String, propulsion: String? = nil, length: NSNumber? = nil, yearBuilt: NSNumber? = nil, remoteID: String? = nil, notes: String? = nil, owner: Sailor? = nil) -> Vessel {
         let createdVessel = NSEntityDescription.insertNewObjectForEntityForName("Vessel", inManagedObjectContext: moc) as! Vessel
         createdVessel.name = name
         createdVessel.propulsion = propulsion
         createdVessel.length = length
         createdVessel.yearBuilt = yearBuilt
-        createdVessel.globalID = globalID
+        createdVessel.remoteID = remoteID
         createdVessel.notes = notes
         createdVessel.owner = owner
         

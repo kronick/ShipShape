@@ -26,6 +26,8 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
     var mapManager: MapManager?
     var trackingState = LocationTrackerState.Stopped
     
+    var firstShowing = true
+    
     @IBOutlet weak var startNewTrackButton: UIButton!
     @IBOutlet weak var followUserButton: UIButton!
     @IBOutlet weak var anchorButton: UIButton!
@@ -55,16 +57,26 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
 //        self.mapManager?.addAnnotationForPath(defaultPath)
 //        
         
+    }
+
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        self.changeTrackingState(LocationTrackerManager.sharedInstance.trackerState)
+        
+        self.mapManager?.clearAnnotations()
         let allPaths = Path.FetchPathsForSailorInContext(self.managedObjectContext, sailor: Sailor.ActiveSailor!)
         for p in allPaths {
             self.mapManager?.addAnnotationForPath(p)
         }
         
     }
-
-    override func viewWillAppear(animated: Bool) {
-        super.viewWillAppear(animated)
-        self.changeTrackingState(LocationTrackerManager.sharedInstance.trackerState)
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        if self.firstShowing && Sailor.ActiveSailor?.username == "anonymous" {
+            self.performSegueWithIdentifier("ShowRegistration", sender: self)
+            self.firstShowing = false
+        }
     }
     
     override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {

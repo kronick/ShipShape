@@ -16,7 +16,7 @@ extension Path {
 
     @NSManaged var title: String?
     @NSManaged var created: NSDate?
-    @NSManaged var globalID: NSNumber?
+    @NSManaged var remoteID: String?
     @NSManaged var notes: String?
     @NSManaged var totalTime: NSNumber?
     @NSManaged var totalDistance: NSNumber?

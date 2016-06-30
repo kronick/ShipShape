@@ -14,7 +14,7 @@ import CoreLocation
 
 private var KVOContext = 0
 
-class TrackDetailViewController: UIViewController {
+class TrackDetailViewController: UIViewController, UITextFieldDelegate, UITextViewDelegate {
     
     // Retreive the managedObjectContext from AppDelegate
     let appDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
@@ -26,6 +26,9 @@ class TrackDetailViewController: UIViewController {
     @IBOutlet weak var pathTitleField: UITextField!
     var activePath: Path?
     
+    @IBOutlet weak var publicSwitch: UISwitch!
+    @IBOutlet weak var notesTextView: UITextView!
+    @IBOutlet weak var deleteButton: UIBarButtonItem!
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -51,6 +54,9 @@ class TrackDetailViewController: UIViewController {
             self.pathTitleField.text = "Untitled Track"
         }
         
+        self.pathTitleField.delegate = self
+        self.notesTextView.delegate = self
+        
     }
     
     override func viewWillAppear(animated: Bool) {
@@ -75,9 +81,51 @@ class TrackDetailViewController: UIViewController {
 
     }
     
+    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+        self.dismissKeyboard()
+        super.touchesBegan(touches, withEvent: event)
+    }
+    
+    // MARK: - UITextFieldDelegate
+    
+    func textFieldShouldReturn(textField: UITextField) -> Bool {
+        self.dismissKeyboard()
+        return false
+    }
+    
+    
     
     // MARK: - Interface actions
     
+    @IBAction func deleteButtonTouched(sender: AnyObject) {
+        let alertView = UIAlertController(title: "Delete this track?", message: nil, preferredStyle: .Alert)
+        let deleteAction = UIAlertAction(title: "Delete", style: .Destructive, handler: { action in
+            // TODO: Actually delete
+            self.managedObjectContext.deleteObject(self.activePath!)
+            do {
+                try self.managedObjectContext.save()
+                if let navigationController = self.parentViewController as? UINavigationController {
+                    navigationController.popViewControllerAnimated(true)
+                }
+            }
+            catch {
+                print ("Error deleting track")
+            }
+        })
+        let cancelAction = UIAlertAction(title: "Cancel", style: .Cancel, handler: { action in
+            // Don't do anything
+        })
+        alertView.addAction(deleteAction)
+        alertView.addAction(cancelAction)
+
+        
+        self.presentViewController(alertView, animated: true, completion: nil)
+        
+        
+    }
+    @IBAction func dismissKeyboard(sender: AnyObject? = nil) {
+        self.view.endEditing(true)
+    }
     @IBAction func toggleStats(sender: AnyObject? = nil) {
         self.mapManager?.updateAllPaths()
         self.activePath?.recalculateStats()
@@ -99,6 +147,8 @@ class TrackDetailViewController: UIViewController {
 //        }
     }
 
+    @IBAction func publicStatusChanged(sender: UISwitch) {
+    }
     @IBAction func editingTitleComplete(sender: AnyObject) {
         if sender as! NSObject == self.pathTitleField {
             self.activePath?.title = self.pathTitleField.text

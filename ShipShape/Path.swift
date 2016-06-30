@@ -9,6 +9,7 @@
 import Foundation
 import CoreData
 import CoreLocation
+import SwiftyJSON
 
 public enum PathType: String {
     case Past = "past"
@@ -26,11 +27,11 @@ class Path: NSManagedObject {
     
     // MARK: - Class methods to create and fetch
     
-    class func CreateInContext(moc: NSManagedObjectContext, title: String? = "Untitled Path", created: NSDate? = NSDate(), globalID: NSNumber? = nil, notes: String? = nil, totalTime: NSNumber? = 0, totalDistance: NSNumber? = 0, averageSpeed: NSNumber? = nil, type: PathType? = .Past, state: PathState? = .Editing, vessel: Vessel? = Vessel.ActiveVessel, creator: Sailor? = Sailor.ActiveSailor, points: NSOrderedSet? = nil) -> Path {
+    class func CreateInContext(moc: NSManagedObjectContext, title: String? = "Untitled Path", created: NSDate? = NSDate(), remoteID: String? = nil, notes: String? = nil, totalTime: NSNumber? = 0, totalDistance: NSNumber? = 0, averageSpeed: NSNumber? = nil, type: PathType? = .Past, state: PathState? = .Editing, vessel: Vessel? = Vessel.ActiveVessel, creator: Sailor? = Sailor.ActiveSailor, points: NSOrderedSet? = nil) -> Path {
         let newPath = NSEntityDescription.insertNewObjectForEntityForName("Path", inManagedObjectContext: moc) as! Path
         
         newPath.created = created
-        newPath.globalID = globalID
+        newPath.remoteID = remoteID
         newPath.notes = notes
         newPath.totalTime = totalTime
         newPath.totalDistance = totalDistance
@@ -171,6 +172,5 @@ class Path: NSManagedObject {
         self.totalTime = lastPoint.created?.timeIntervalSinceDate(firstPoint.created!)
         self.totalDistance = newTotalDistance
         self.averageSpeed = newTotalDistance / newTotalTime
-        
     }
 }

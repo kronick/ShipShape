@@ -96,4 +96,22 @@ class TrackListViewController : UIViewController, UITableViewDataSource, UITable
         return cell
     }
     
+    func tableView(tableView: UITableView, canEditRowAtIndexPath indexPath: NSIndexPath) -> Bool {
+        return true;
+    }
+    
+    func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
+        if editingStyle == .Delete {
+            self.managedObjectContext.deleteObject(self.tracks[indexPath.row])
+            do {
+                try self.managedObjectContext.save()
+                self.tracks = self.tracks.filter { $0 != self.tracks[indexPath.row] }
+                self.tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Automatic)
+            }
+            catch {
+                print("Error deleting")
+            }
+        }
+    }
+    
 }

@@ -17,7 +17,7 @@ extension Point {
     @NSManaged var latitude: NSNumber?
     @NSManaged var longitude: NSNumber?
     @NSManaged var propulsion: String?
-    @NSManaged var globalID: NSNumber?
+    @NSManaged var remoteID: String?
     @NSManaged var created: NSDate?
     @NSManaged var notes: String?
     @NSManaged var path: Path?

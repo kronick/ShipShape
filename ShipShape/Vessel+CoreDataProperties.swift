@@ -18,7 +18,7 @@ extension Vessel {
     @NSManaged var propulsion: String?
     @NSManaged var length: NSNumber?
     @NSManaged var yearBuilt: NSNumber?
-    @NSManaged var globalID: NSNumber?
+    @NSManaged var remoteID: String?
     @NSManaged var notes: String?
     @NSManaged var paths: NSSet?
     @NSManaged var owner: Sailor?

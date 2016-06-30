@@ -21,31 +21,50 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         
         // Force the logged in username to "anonymous"
+        
         let defaultUsername = "anonymous"
+        
+        // See if there is a username saved and use it if so
+        var currentUsername = defaultUsername
+        var currentPassword = ""
+        if let savedUsername = NSUserDefaults.standardUserDefaults().objectForKey("loggedInUsername") as? String  {
+            currentUsername = savedUsername
+        }
+        if let savedPassword = NSUserDefaults.standardUserDefaults().objectForKey("loggedInPassword") as? String  {
+            currentPassword = savedPassword
+        }
+        
+        logIn(currentUsername, password: currentPassword)
+        
+        locationTrackerManager.initialize()
+        
+        return true
+    }
+    
+    func logIn(username: String, password: String) {
+        // Keep track of the old Sailor logged in 
+        // If the username is "anonymous" all that Sailor's tracks will be moved to the new user
+        let managedObjectContext = (UIApplication.sharedApplication().delegate as! AppDelegate).managedObjectContext
+        var oldSailor: Sailor?
+        if let oldUsername = NSUserDefaults.standardUserDefaults().objectForKey("loggedInUsername") as? String {
+            oldSailor = Sailor.FetchByUsernameInContext(self.managedObjectContext, username: oldUsername)
+        }
+        
+        
+        // Set NSUserDefaults
+        NSUserDefaults.standardUserDefaults().setObject(username, forKey: "loggedInUsername")
+        NSUserDefaults.standardUserDefaults().setObject(password, forKey: "loggedInPassword")
+        
         let defaultVesselName = "anonymous ship"
         
-        var currentUsername = defaultUsername
-        
-        NSUserDefaults.standardUserDefaults().setObject(defaultUsername, forKey: "loggedInUsername")
-        
-        // Make sure a default user and vessel are set in the CoreData store
-        let managedObjectContext = (UIApplication.sharedApplication().delegate as! AppDelegate).managedObjectContext
-        
-        // First fetch looking for a user
-        var loggedInSailorExists = false
-        
-        if let user = NSUserDefaults.standardUserDefaults().objectForKey("loggedInUsername") as? String {
-            currentUsername = user
-            
-            let sailorResult = Sailor.FetchByUsernameInContext(self.managedObjectContext, username: currentUsername)
-            if sailorResult != nil {
-                loggedInSailorExists = true
-                Sailor.ActiveSailor = sailorResult
-            }
+        // Make make sure sure a Sailor and Vessel managed object exists for that username, create if not
+        // First fetch looking for a Sailor with that username
+        let sailorResult = Sailor.FetchByUsernameInContext(self.managedObjectContext, username: username)
+        if sailorResult != nil {
+            Sailor.ActiveSailor = sailorResult
         }
-
-        if !loggedInSailorExists {
-            Sailor.ActiveSailor = Sailor.CreateInContext(self.managedObjectContext, username: currentUsername, realName: "Local User")
+        else {
+            Sailor.ActiveSailor = Sailor.CreateInContext(self.managedObjectContext, username: username, realName: "Local User")
         }
         
         // Now make sure the current sailor has a vessel
@@ -58,6 +77,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             Vessel.ActiveVessel = vesselResults[0]
         }
         
+        // Set username and password in RemoteAPIManager
+        RemoteAPIManager.sharedInstance.username = username
+        RemoteAPIManager.sharedInstance.password = password
+        
+        // If the previous user was not logged in, copy all their paths to this new user
+        if Sailor.ActiveSailor != nil && oldSailor?.username == "anonymous" {
+            print("Moving old sailor's paths to new Sailor")
+            let oldPaths = Path.FetchPathsForSailorInContext(self.managedObjectContext, sailor: oldSailor!)
+            for path in oldPaths {
+                path.creator = Sailor.ActiveSailor
+            }
+        }
         
         do {
             try managedObjectContext.save()
@@ -67,11 +98,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         
         print("Current Sailor: \(Sailor.ActiveSailor?.username)\nCurrent Vessel: \(Vessel.ActiveVessel?.name)")
-        
-        
-        locationTrackerManager.initialize()
-        
-        return true
     }
 
     func applicationWillResignActive(application: UIApplication) {
@@ -118,8 +144,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let coordinator = NSPersistentStoreCoordinator(managedObjectModel: self.managedObjectModel)
         let url = self.applicationDocumentsDirectory.URLByAppendingPathComponent("SingleViewCoreData.sqlite")
         var failureReason = "There was an error creating or loading the application's saved data."
+        let options: [NSObject:AnyObject] = [NSMigratePersistentStoresAutomaticallyOption: 1, NSInferMappingModelAutomaticallyOption: 1]
         do {
-            try coordinator.addPersistentStoreWithType(NSSQLiteStoreType, configuration: nil, URL: url, options: nil)
+            try coordinator.addPersistentStoreWithType(NSSQLiteStoreType, configuration: nil, URL: url, options: options)
         } catch {
             // Report any error we got.
             var dict = [String: AnyObject]()

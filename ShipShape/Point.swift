@@ -19,14 +19,14 @@ public enum PropulsionMethod: String {
     case None
 }
 class Point: NSManagedObject {
-    class func CreateInContext(moc: NSManagedObjectContext, location: CLLocation, propulsion: PropulsionMethod = .Sail, globalID: NSNumber? = nil, notes: String? = nil, path: Path? = nil) -> Point {
+    class func CreateInContext(moc: NSManagedObjectContext, location: CLLocation, propulsion: PropulsionMethod = .Sail, remoteID: String? = nil, notes: String? = nil, path: Path? = nil) -> Point {
         let createdPoint = NSEntityDescription.insertNewObjectForEntityForName("Point", inManagedObjectContext: moc) as! Point
         
         
         createdPoint.latitude = location.coordinate.latitude
         createdPoint.longitude = location.coordinate.longitude
         createdPoint.propulsion = propulsion.rawValue
-        createdPoint.globalID = globalID
+        createdPoint.remoteID = remoteID
         createdPoint.created = location.timestamp
         createdPoint.notes = notes
         createdPoint.path = path
@@ -34,14 +34,14 @@ class Point: NSManagedObject {
         return createdPoint
     }
     
-    class func CreateInContext(moc: NSManagedObjectContext, latitude: CLLocationDegrees, longitude: CLLocationDegrees, timestamp: NSDate? = NSDate(), propulsion: PropulsionMethod = .Sail, globalID: NSNumber? = nil, notes: String? = nil, path: Path? = nil) -> Point {
+    class func CreateInContext(moc: NSManagedObjectContext, latitude: CLLocationDegrees, longitude: CLLocationDegrees, timestamp: NSDate? = NSDate(), propulsion: PropulsionMethod = .Sail, remoteID: String? = nil, notes: String? = nil, path: Path? = nil) -> Point {
         let createdPoint = NSEntityDescription.insertNewObjectForEntityForName("Point", inManagedObjectContext: moc) as! Point
         
         
         createdPoint.latitude = latitude
         createdPoint.longitude = longitude
         createdPoint.propulsion = propulsion.rawValue
-        createdPoint.globalID = globalID
+        createdPoint.remoteID = remoteID
         createdPoint.created = timestamp
         createdPoint.notes = notes
         createdPoint.path = path
