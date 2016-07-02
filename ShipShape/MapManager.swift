@@ -11,12 +11,21 @@
 import Foundation
 import Mapbox
 
-class MapManager : NSObject, MGLMapViewDelegate {
+protocol MapCalloutDelegate {
+    func showCalloutForPath(path: Path, atPoint: CGPoint, inMapView: UIView)
+    func dismissCallout()
+}
+
+class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
+    // Retreive the main NSManagedObjectContext from AppDelegate
+    let appDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
+    let mainManagedObjectContext = (UIApplication.sharedApplication().delegate as! AppDelegate).managedObjectContext
     
     var pathAnnotations = [Path:PathAnnotation]()   // Holds a list of PathAnnotations indexed by Path instances
     var pathAnnotationSegmentStyles = [MGLPolyline:PathAnnotationSegmentStyle]()    // Holds style info for each path segment. Must be updated in concert with pathAnnotations!!
     var tappablePathPoints = [(CGPoint, Path)]()  // Holds a list of points that are currently on screen and potentially tappable
     var selectedPointAnnotation: MGLPointAnnotation?
+    
     var mapView: MGLMapView? = nil
     var mapIsLoaded = false
     var mapOverlay: AnimatedMapOverlay?
@@ -27,6 +36,8 @@ class MapManager : NSObject, MGLMapViewDelegate {
     
     var tracksAreTappable = true
     let tappableThresholdSquared = 400 as CGFloat
+    
+    var calloutDelegate: MapCalloutDelegate? = nil
 
     var colorIndexer = 0 as Int
     var colorPalette = [
@@ -49,9 +60,10 @@ class MapManager : NSObject, MGLMapViewDelegate {
         self.mapView = mapView
         
         self.mapOverlay = AnimatedMapOverlay(mapManager: self)
-        self.mapView?.addSubview(self.mapOverlay!)
+        //self.mapView?.addSubview(self.mapOverlay!)
         
         self.mapView?.delegate = self
+        
         
         // Set up tap gesture to select routes
         // But first set up a double tap that does nothing, just so we can ignore it and Mapbox's double tap handling
@@ -110,7 +122,7 @@ class MapManager : NSObject, MGLMapViewDelegate {
         // Loop through all paths and convert their points to coordinates in the map view
         // Filter out points that are very close to each other
         // TODO: add intermediate points to long segments
-        
+    
         self.tappablePathPoints.removeAll()
         
         // Do this calculation on a background thread
@@ -121,7 +133,7 @@ class MapManager : NSObject, MGLMapViewDelegate {
             for path in paths {
                 var lastPoint: CGPoint? = nil   // Used to calculate segment distance
                 if let points = path.points {
-                    for p in points {
+                    for p in points {   // TODO: Need to cache points before going to a background thread; crashes EXC_BAD_ACCESS here sometimes -- use NSManagedObjectID ?
                         if let point = p as? Point {
                             let coordinate = CLLocationCoordinate2D(latitude: point.latitude! as Double, longitude: point.longitude! as Double)
                             let position = self.mapView!.convertCoordinate(coordinate, toPointToView: self.mapView)
@@ -158,18 +170,26 @@ class MapManager : NSObject, MGLMapViewDelegate {
         }
     }
     
+    // MARK: - UIGestureRecognizerDelegate
+    
+    func gestureRecognizer(gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWithGestureRecognizer otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
+    }
+    
     func viewWasTappedByGestureRecognizer(recognizer: UITapGestureRecognizer) {
         guard let mapView = self.mapView else { return }
         
         let location = recognizer.locationInView(mapView)
         
         // Remove old annotation
-        if let selectedPointAnnotation = self.selectedPointAnnotation {
-            mapView.removeAnnotation(selectedPointAnnotation)
-        }
+//        if let selectedPointAnnotation = self.selectedPointAnnotation {
+//            mapView.removeAnnotation(selectedPointAnnotation)
+//        }
+
+        
         
         // Look up the closest path/point in a background thread
-        dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0)) { [unowned self] in
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0)) { [unowned self] in
             var closestDistance = CGFloat.max
             var closestPath: Path? = nil
             var closestPoint: CGPoint? = nil
@@ -188,29 +208,57 @@ class MapManager : NSObject, MGLMapViewDelegate {
             
             if let closestPath = closestPath, closestPoint = closestPoint {
                 print(closestPath.title)
-                // Create a new point annotation
-                self.selectedPointAnnotation = MGLPointAnnotation()
-                self.selectedPointAnnotation?.coordinate = mapView.convertPoint(closestPoint, toCoordinateFromView: mapView)
-                if let title = closestPath.title {
-                    self.selectedPointAnnotation?.title = title
-                }
-                if let date = closestPath.created {
-                    let dateFormatter = NSDateFormatter()
-                    dateFormatter.dateStyle = .MediumStyle
-                    dateFormatter.timeStyle = .ShortStyle
-                    
-                    self.selectedPointAnnotation?.subtitle = dateFormatter.stringFromDate(date)
-                }
                 
                 dispatch_async(dispatch_get_main_queue()) { [unowned self] in
-                    if let selectedPointAnnotation = self.selectedPointAnnotation {
-                        mapView.addAnnotation(selectedPointAnnotation)
-                        mapView.selectAnnotation(selectedPointAnnotation, animated: true)
-                    }
+                    guard let delegate = self.calloutDelegate, mapView = self.mapView else { return }
+                    
+                    delegate.showCalloutForPath(closestPath, atPoint: closestPoint, inMapView: mapView)
+                }
+            }
+            else {
+                // Just remove the view
+                dispatch_async(dispatch_get_main_queue()) { [unowned self] in
+                    guard let delegate = self.calloutDelegate else { return }
+                    delegate.dismissCallout()
                 }
             }
         }
 
+    }
+    
+    func generateCalloutViewForPath(path: Path, anchor: CGPoint) -> UIView {
+        let width = 250 as CGFloat
+        let height = 90 as CGFloat
+        let view = UIView(frame: CGRect(x: anchor.x-width/2, y: anchor.y-height, width: width, height: height))
+        view.backgroundColor = UIColor.whiteColor()
+        
+        if let title = path.title {
+            let titleLabel = UILabel()
+            titleLabel.text = title
+            titleLabel.sizeToFit()
+            titleLabel.frame.offsetInPlace(dx: 10, dy: 10)
+            view.addSubview(titleLabel)
+        }
+        
+        let infoButton = UIButton(type: .DetailDisclosure)
+        view.addSubview(infoButton)
+        infoButton.frame.offsetInPlace(dx: 200, dy: 10)
+        
+        if let date = path.created {
+            let dateFormatter = NSDateFormatter()
+            dateFormatter.dateStyle = .MediumStyle
+            dateFormatter.timeStyle = .ShortStyle
+            
+            let dateLabel = UILabel()
+            dateLabel.text = dateFormatter.stringFromDate(date)
+            view.addSubview(dateLabel)
+            dateLabel.sizeToFit()
+            dateLabel.frame.offsetInPlace(dx: 10, dy: 40)
+            
+        }
+        
+        
+        return view
     }
     
     func addAnnotationForPath(path: Path) {
@@ -306,12 +354,30 @@ class MapManager : NSObject, MGLMapViewDelegate {
         var style = PathAnnotationSegmentStyle()
 
         if sailor == Sailor.ActiveSailor {
-            style.strokeColor = UIColor(red: 0.94, green: 0.30, blue: 0.30, alpha: 1)
+            //style.strokeColor = UIColor(red: 0.94, green: 0.30, blue: 0.30, alpha: 1)
+            var alpha = CGFloat(10 - segment.colorIndex) / 10.0
+            if alpha < 0.1 { alpha = 0.1 }
+            style.strokeColor = UIColor(hue: 0.57, saturation: 0.9, brightness: 1.0, alpha: 1.0)
+            style.alpha = alpha
             style.lineWidth = 3.0
         }
+        else {
+            // Style for other sailors' paths
+            style.strokeColor = UIColor(hue: 0.24, saturation: 0.9, brightness: 1.0, alpha: 1.0)
+            style.alpha = 0.8
+            style.lineWidth = 1.0
+        }
         
+        // Special state if this path is actively recording
+        if let state = segment.parent?.state {
+            if state == PathState.Recording.rawValue {
+                style.strokeColor = UIColor(hue: 0, saturation: 0.9, brightness: 1.0, alpha: 1.0)
+                style.alpha = 1.0
+            }
+        }
         //style.strokeColor = UIColor(red: CGFloat.random(0.3,1), green: CGFloat.random(0.3,1), blue: CGFloat.random(0.3,1), alpha: 1.0)
-        style.strokeColor = self.colorPalette[segment.colorIndex % self.colorPalette.count]
+        //style.strokeColor = self.colorPalette[segment.colorIndex % self.colorPalette.count]
+        
         
         return style
         
@@ -338,10 +404,53 @@ class MapManager : NSObject, MGLMapViewDelegate {
     
     func mapView(mapView: MGLMapView, regionWillChangeAnimated animated: Bool) {
         mapOverlay?.fadeOutCurves()
+        if let delegate = self.calloutDelegate {
+            delegate.dismissCallout()
+        }
     }
     func mapView(mapView: MGLMapView, regionDidChangeAnimated animated: Bool) {
         mapOverlay?.fadeInCurves()
         self.updateTappablePoints()
+        
+        // Search for paths in viewport
+        let a = mapView.convertPoint(CGPoint(x:0, y:0), toCoordinateFromView: mapView)
+        let b = mapView.convertPoint(CGPoint(x:mapView.frame.width, y:0), toCoordinateFromView: mapView)
+        let c = mapView.convertPoint(CGPoint(x:mapView.frame.width, y:mapView.frame.height), toCoordinateFromView: mapView)
+        let d = mapView.convertPoint(CGPoint(x:0, y:mapView.frame.height), toCoordinateFromView: mapView)
+        
+        RemoteAPIManager.sharedInstance.getPathsInBounds(a, b, c, d, completion: { pathIDs in
+            // This completion callback is called asynchronously and contains CoreData ObjectIDs that need to be re-associated with the main managedobjectcontext
+            // So we need to de-reference the ObjectIDs and add in new paths back on the main thread
+            dispatch_async(dispatch_get_main_queue()) {
+                NSLog("MapManager: Paths in bounds download complete.")
+                var freshPaths = [Path]()  // List of freshly received paths
+                for p in pathIDs {
+                    if let path = self.mainManagedObjectContext.objectWithID(p) as? Path {
+                        if path.creator != Sailor.ActiveSailor {
+                            // Only add other peoples' paths
+                            path.temporary = true // Flag as temporary so we can remote it later
+                            
+                            // Add this path to the map only if it isn't already being displayed
+                            if !self.pathAnnotations.keys.contains(path) {
+                                self.addAnnotationForPath(path)
+                            }
+                            
+                            // Keep this path fresh
+                            freshPaths.append(path)
+                        }
+                    }
+                }
+                
+                // Now delete any old temporary paths that aren't in the fresh list
+                for path in self.pathAnnotations.keys {
+                    if path.temporary == true && !freshPaths.contains(path) {
+                        self.removeAnnotationForPath(path)
+                    }
+                }
+                
+                NSLog("MapManager: All paths added to the map")
+            }
+        })
     }
     
     func mapViewDidFinishLoadingMap(mapView: MGLMapView) {
@@ -386,18 +495,19 @@ class MapManager : NSObject, MGLMapViewDelegate {
     }
     func mapView(mapView: MGLMapView, didChangeUserTrackingMode mode: MGLUserTrackingMode, animated: Bool) {
         self.userTrackingMode = mode
-//        switch(mode) {
-//        case .None:
-//            self.followUserButton.selected = false
-//        case .Follow, .FollowWithCourse, .FollowWithHeading:
-//            self.followUserButton.selected = true
-//        }
     }
     
     func mapView(mapView: MGLMapView, didSelectAnnotation annotation: MGLAnnotation) {
         
     }
     func mapView(mapView: MGLMapView, tapOnCalloutForAnnotation annotation: MGLAnnotation) {
+        
+    }
+    
+    func mapView(mapView: MGLMapView, rightCalloutAccessoryViewForAnnotation annotation: MGLAnnotation) -> UIView? {
+        return UIButton(type: .DetailDisclosure)
+    }
+    func mapView(mapView: MGLMapView, annotation: MGLAnnotation, calloutAccessoryControlTapped control: UIControl) {
         
     }
 }

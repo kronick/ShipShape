@@ -98,6 +98,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         
         print("Current Sailor: \(Sailor.ActiveSailor?.username)\nCurrent Vessel: \(Vessel.ActiveVessel?.name)")
+        
+        // Clear out old cached tracks
+        Path.ClearCacheInContext(managedObjectContext)
     }
 
     func applicationWillResignActive(application: UIApplication) {

@@ -19,13 +19,13 @@ public enum PropulsionMethod: String {
     case None
 }
 class Point: NSManagedObject {
-    class func CreateInContext(moc: NSManagedObjectContext, location: CLLocation, propulsion: PropulsionMethod = .Sail, remoteID: String? = nil, notes: String? = nil, path: Path? = nil) -> Point {
+    class func CreateInContext(moc: NSManagedObjectContext, location: CLLocation, propulsion: PropulsionMethod? = .Sail, remoteID: String? = nil, notes: String? = nil, path: Path? = nil) -> Point {
         let createdPoint = NSEntityDescription.insertNewObjectForEntityForName("Point", inManagedObjectContext: moc) as! Point
         
         
         createdPoint.latitude = location.coordinate.latitude
         createdPoint.longitude = location.coordinate.longitude
-        createdPoint.propulsion = propulsion.rawValue
+        createdPoint.propulsion = propulsion == nil ? PropulsionMethod.Sail.rawValue : propulsion!.rawValue
         createdPoint.remoteID = remoteID
         createdPoint.created = location.timestamp
         createdPoint.notes = notes
@@ -34,13 +34,13 @@ class Point: NSManagedObject {
         return createdPoint
     }
     
-    class func CreateInContext(moc: NSManagedObjectContext, latitude: CLLocationDegrees, longitude: CLLocationDegrees, timestamp: NSDate? = NSDate(), propulsion: PropulsionMethod = .Sail, remoteID: String? = nil, notes: String? = nil, path: Path? = nil) -> Point {
+    class func CreateInContext(moc: NSManagedObjectContext, latitude: CLLocationDegrees, longitude: CLLocationDegrees, timestamp: NSDate? = NSDate(), propulsion: PropulsionMethod? = .Sail, remoteID: String? = nil, notes: String? = nil, path: Path? = nil) -> Point {
         let createdPoint = NSEntityDescription.insertNewObjectForEntityForName("Point", inManagedObjectContext: moc) as! Point
         
         
         createdPoint.latitude = latitude
         createdPoint.longitude = longitude
-        createdPoint.propulsion = propulsion.rawValue
+        createdPoint.propulsion = propulsion == nil ? PropulsionMethod.Sail.rawValue : propulsion!.rawValue
         createdPoint.remoteID = remoteID
         createdPoint.created = timestamp
         createdPoint.notes = notes

@@ -17,13 +17,15 @@
 import Foundation
 import Alamofire
 import SwiftyJSON
+import CoreLocation
+import CoreData
 
 class RemoteAPIManager : NSObject {
     static let sharedInstance = RemoteAPIManager()
     
     // Retreive the managedObjectContext from AppDelegate
     let appDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
-    let managedObjectContext = (UIApplication.sharedApplication().delegate as! AppDelegate).managedObjectContext
+    let mainManagedObjectContext = (UIApplication.sharedApplication().delegate as! AppDelegate).managedObjectContext
     
     let apiBase = "https://u26f5.net/api/v0.1/"
     
@@ -124,6 +126,8 @@ class RemoteAPIManager : NSObject {
             return
         }
         
+        NSLog("Creating path payload...")
+        
         let endpoint = self.apiBase + "paths/"
         
         // Move properties form the Path object into a dict so it can be serialized as JSON
@@ -141,7 +145,7 @@ class RemoteAPIManager : NSObject {
         if let vessel = path.vessel?.name { payload["vessel"] = vessel }
         if let vessel_id = path.vessel?.remoteID { payload["vessel_id"] = vessel_id }
         
-        if isnan(payload["averageSpeed"] as! Double) { payload["averageSpeed"] = 0 }
+        if payload["averageSpeed"] == nil || isnan(payload["averageSpeed"] as! Double) { payload["averageSpeed"] = 0 }
         
         var pointsArray = [[String: AnyObject]]()
    
@@ -163,6 +167,7 @@ class RemoteAPIManager : NSObject {
             let title = path.title == nil ? "(unknown)" : path.title!
             print("Path '\(title)' already has a remoteID: \(remoteID)")
         }
+        NSLog("Sending request...")
         Alamofire.request(.POST, endpoint,
                           parameters: payload,
                           encoding: .JSON,
@@ -182,7 +187,7 @@ class RemoteAPIManager : NSObject {
                         dispatch_async(dispatch_get_main_queue()) { [unowned self] in
                             path.remoteID = json["path_id"].string
                             let title = path.title == nil ? "(unknown)" : path.title!
-                            print("Successfully posted path '\(title)' -> remote ID '\(path.remoteID!)'")
+                            NSLog("Successfully posted path '\(title)' -> remote ID '\(path.remoteID!)'")
                             
                             self.appDelegate.saveContext()
                         }
@@ -195,6 +200,154 @@ class RemoteAPIManager : NSObject {
     }
     func syncPath(path: Path) {
         
+    }
+    
+    func getPathByID(remoteID: String, includePoints: Bool = true, completion: (pathID: NSManagedObjectID?) -> Void) {
+        let modifier = includePoints ? "" : "metadata"
+        let endpoint = self.apiBase + "paths/" + remoteID + "/" + modifier
+        
+        print("getPathByID: Downloading path \(remoteID)")
+        
+        Alamofire.request(.GET, endpoint,
+                          headers: self.getAuthHeader())
+            .responseJSON(queue: dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), completionHandler: { response in
+                guard response.result.error == nil else {
+                    print("getPathByID: Error downloading path: \(response.result.error!)")
+                    completion(pathID: nil)
+                    return
+                }
+                guard let value = response.result.value else {
+                    print("getPathByID: No response.")
+                    completion(pathID: nil)
+                    return
+                }
+                
+                let path = JSON(value)
+                
+                
+                // Create temporary CoreData ManagedObjectContext to save these results
+                // Set the parent to the main MOC so the results can be merged in on the main thread
+                let moc = NSManagedObjectContext(concurrencyType: .PrivateQueueConcurrencyType)
+                moc.parentContext = self.mainManagedObjectContext
+                moc.performBlockAndWait {   // Do all this work in the proper queue for this MOC
+                    let title = path["title"].string
+                    print("getPathByID: Downloaded '\(title)'")
+                    // Parse the JSON for this path's metadata and get it ready to store as a managed object
+                    let created = NSDate.init(timeIntervalSince1970: path["created"].doubleValue)
+                    let id = path["_id"].stringValue
+                    let notes = path["notes"].string
+                    let totalTime = path["totalTime"].double
+                    let totalDistance = path["totalDistance"].double
+                    let averageSpeed = path["averageSpeed"].double
+                    let type = PathType(rawValue: path["type"].stringValue)
+                    let state = PathState(rawValue: path["state"].stringValue)
+                    // TODO: Get vessel and sailor, download if needed
+                    let vessel: Vessel? = nil
+                    var sailor: Sailor? = nil
+                                        
+                    
+                    // Create the managed object
+                    let newPath = Path.CreateInContext(moc, title: title, created: created, remoteID: id, notes: notes, totalTime: totalTime, totalDistance: totalDistance, averageSpeed: averageSpeed, type: type, state: state, vessel: vessel, creator: sailor, points: nil)
+                    
+                    // Now process the points and add them to this path
+                    let pointsArray = path["points"].arrayValue
+                    for p in pointsArray {
+                        let latitude = p["latitude"].doubleValue
+                        let longitude = p["longitude"].doubleValue
+                        let pointCreation = NSDate.init(timeIntervalSince1970: p["created"].doubleValue)
+                        let propulsion = PropulsionMethod(rawValue: p["propulsion"].stringValue)
+                        let notes = p["notes"].string
+                        
+                        // Create the point in the temporary managed object context
+                        Point.CreateInContext(moc, latitude: latitude, longitude: longitude, timestamp: pointCreation, propulsion: propulsion, remoteID: nil, notes: notes, path: newPath)
+                    }
+                    
+                    do {
+                        try moc.save()
+                        // Call the completion callback with the created object ID
+                        completion(pathID: newPath.objectID)
+                    }
+                    catch {
+                        print("getPathByID: Error saving temporary managed object context.")
+                        completion(pathID: nil)
+                        return
+                    }
+                }
+            }
+        )
+    }
+    
+    func getPathsInBounds(a: CLLocationCoordinate2D, _ b: CLLocationCoordinate2D, _ c: CLLocationCoordinate2D, _ d: CLLocationCoordinate2D, completion: (pathIDs: [NSManagedObjectID]) -> Void) {
+        
+        let endpoint = self.apiBase + "paths/in/\(a.longitude),\(a.latitude),\(b.longitude),\(b.latitude),\(c.longitude),\(c.latitude),\(d.longitude),\(d.latitude)"
+        
+        NSLog("Sending request to \(endpoint)...")
+        Alamofire.request(.GET, endpoint,
+            headers: self.getAuthHeader())
+            .validate()
+            .responseJSON(queue: dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), completionHandler: { response in
+                guard response.result.error == nil else {
+                    // Handle error
+                    print("getPathsInBounds: Error getting paths: \(response.result.error!)")
+                    completion(pathIDs: [])
+                    return
+                }
+                
+                guard let value = response.result.value else {
+                    print("getPathsInBounds: No response.")
+                    completion(pathIDs: [])
+                    return
+                }
+                // Create temporary CoreData ManagedObjectContext to save these results
+                // Set the parent to the main MOC so the results can be merged in on the main thread
+                let moc = NSManagedObjectContext(concurrencyType: .PrivateQueueConcurrencyType)
+                moc.parentContext = self.mainManagedObjectContext
+                moc.performBlockAndWait {   // Do all this work in the proper queue for this MOC
+                    let json = JSON(value)
+                    let paths = json["paths"].arrayValue
+                    
+                    var pathIDs = [NSManagedObjectID]()
+                    
+                    // Create a dispatch group so we can download any paths asynchronously but wait for them all before calling the completion handler
+                    let pathDownloadGroup = dispatch_group_create()
+                    
+                    print("getPathsInBounds: Found these paths in range:")
+                    for p in paths {
+                        print(p["title"].stringValue + " (" + p["_id"].stringValue + ")")
+                        
+                        // For each path, see if it already exists in the local store
+                        let remoteID = p["_id"].stringValue
+                        if let localPath = Path.FetchPathWithRemoteIDInContext(moc, remoteID: remoteID) {
+                            // This Path already exists locally
+                            // TODO: Update/sync metadata
+                            // Add this path's objectID to the array
+                            pathIDs.append(localPath.objectID)
+                        }
+                        else {
+                            // A path with this remoteID does not exist. Download it
+                            dispatch_group_enter(pathDownloadGroup)
+                            self.getPathByID(remoteID, completion: { objectID in
+                                // Put the downloaded path's local CoreData objectID into the list
+                                if let id = objectID {
+                                    pathIDs.append(id)
+                                }
+                                dispatch_group_leave(pathDownloadGroup)
+                            })
+                        }
+                    }
+                    
+                    // Wait for all paths to finish downloading
+                    //dispatch_group_wait(pathDownloadGroup, DISPATCH_TIME_FOREVER)
+                    dispatch_group_notify(pathDownloadGroup, dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), {
+                        // Now call the completion callback with the objectIDs of all the paths
+                        completion(pathIDs: pathIDs)
+                    })
+                    
+                    
+                }
+            
+            }
+        )
     }
     
 }

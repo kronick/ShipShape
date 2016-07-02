@@ -14,7 +14,7 @@ import CoreLocation
 
 private var KVOContext = 0
 
-class MainMapViewController: UIViewController, CLLocationManagerDelegate {
+class MainMapViewController: UIViewController, CLLocationManagerDelegate, MapCalloutDelegate {
     
     // Retreive the managedObjectContext from AppDelegate
     let appDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
@@ -25,6 +25,8 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
     
     var mapManager: MapManager?
     var trackingState = LocationTrackerState.Stopped
+    var recentTrack: Path?
+    var calloutTrack: Path?
     
     var firstShowing = true
     
@@ -37,6 +39,11 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
     @IBOutlet weak var statsLabel: UILabel!
     
     
+    @IBOutlet weak var calloutView: UIView!
+    @IBOutlet weak var calloutViewTitle: UILabel!
+    @IBOutlet weak var calloutViewStats: UILabel!
+    @IBOutlet weak var calloutViewDetailButton: UIButton!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -45,7 +52,7 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
         
         mapView.setUserTrackingMode(MGLUserTrackingMode.Follow, animated: true)
         self.mapManager = MapManager(mapView: self.mapView)
-        
+        self.mapManager?.calloutDelegate = self
         
         self.mapManager?.addObserver(self, forKeyPath: "userTrackingMode", options: .New, context: &KVOContext)
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(receiveTrackingStateNotification), name: "shipShape.locationTrackerStateChange", object: nil)
@@ -55,19 +62,27 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
 //            self.mapManager?.updateAllPaths()
 //        }
 //        self.mapManager?.addAnnotationForPath(defaultPath)
-//        
+//      
+        // Make sure we can move the callout view around even though autolayout is enabled
+        self.calloutView.translatesAutoresizingMaskIntoConstraints = true
+        for v in self.calloutView.subviews {
+            v.translatesAutoresizingMaskIntoConstraints = true
+        }
         
     }
 
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
+        
         self.changeTrackingState(LocationTrackerManager.sharedInstance.trackerState)
         
         self.mapManager?.clearAnnotations()
         let allPaths = Path.FetchPathsForSailorInContext(self.managedObjectContext, sailor: Sailor.ActiveSailor!)
         for p in allPaths {
             self.mapManager?.addAnnotationForPath(p)
+            //p.remoteID = nil
         }
+        appDelegate.saveContext()
         
     }
     
@@ -171,6 +186,58 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
         self.trackingState = newState
     }
     
+    // MARK: - MapCaloutDelegate
+    func showCalloutForPath(path: Path, atPoint: CGPoint, inMapView: UIView) {
+        
+        // Set up labels
+        self.calloutViewTitle.text = path.title == nil ? "Untitled Track" : path.title!
+        let dateFormatter = NSDateFormatter()
+        dateFormatter.dateStyle = .MediumStyle
+        dateFormatter.timeStyle = .ShortStyle
+        self.calloutViewStats.text = path.created == nil ? "!!!" : dateFormatter.stringFromDate(path.created!)
+
+        self.calloutTrack = path // Used when the info button segue is triggered
+        
+        // Set the view's frame
+        let anchor = self.view.convertPoint(atPoint, fromView: inMapView)
+        var x = anchor.x - self.calloutView.frame.width/2
+        var y = anchor.y - self.calloutView.frame.height - 10
+        var w = self.calloutView.frame.width
+        var h = self.calloutView.frame.height
+        var margin = 5.0 as CGFloat
+        // Keep it in bounds
+        if x < margin { x = margin }
+        if x + w > self.view.frame.width - margin { x = self.view.frame.width - margin - w }
+        if y < margin { y = margin }
+        if y + h > self.view.frame.height - margin { y = self.view.frame.height - margin - h }
+        self.calloutView.frame = CGRect(x: x, y: y, width: w, height: h)
+    
+        // Show the view
+
+        self.calloutView.hidden = false
+        self.calloutView.transform = CGAffineTransformMakeScale(0.1, 0.1)
+        UIView.animateWithDuration(0.3, animations: {
+            self.calloutView.transform = CGAffineTransformMakeScale(1, 1)
+            //self.calloutView.layer.transform = CATransform3DMakeScale(1.0, 1.0, 1.0)
+            self.calloutView.alpha = 1
+            self.calloutViewStats.sizeToFit()
+            }, completion: { finished in
+                return
+        })
+    }
+    func dismissCallout() {
+        self.calloutView.transform = CGAffineTransformMakeScale(1, 1)
+        UIView.animateWithDuration(0.3, animations: {
+            self.calloutView.transform = CGAffineTransformMakeScale(0.1, 0.1)
+            //self.calloutView.layer.transform = CATransform3DMakeScale(0.1, 0.1, 1.0)
+            self.calloutView.alpha = 0
+            }, completion: { finished in
+//                self.calloutView.hidden = true
+                self.calloutView.transform = CGAffineTransformMakeScale(1, 1)
+                self.calloutTrack = nil
+        })
+    }
+    
     
     // MARK: - Interface actions
     
@@ -179,10 +246,36 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate {
     }
     @IBAction func startRecordingNewTrack(sender: AnyObject? = nil) {
         LocationTrackerManager.sharedInstance.changeState(.Recording)
+        self.recentTrack = LocationTrackerManager.sharedInstance.activePath
     }
     
     @IBAction func stopRecordingTrack(sender: AnyObject? = nil) {
         LocationTrackerManager.sharedInstance.changeState(.Stopped)
+        
+        // Show track detail after track is over to save or quit
+        self.performSegueWithIdentifier("ShowTrackDetail", sender: self)
+        self.recentTrack = nil
+    }
+    
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        switch segue.identifier {
+        case "ShowTrackDetail"?:
+            if let destination = segue.destinationViewController as? TrackDetailViewController {
+                destination.hideNavBar = false
+                if sender as? UIButton == self.calloutViewDetailButton {
+                    // This is an old track selected from the map
+                    destination.editMode = .SavedTrack
+                    destination.activePath = self.calloutTrack!
+                }
+                else {
+                    // This is a new track and the detail is automatically presented by the stop recording button
+                    destination.activePath = self.recentTrack
+                    destination.editMode = .NewTrack
+                }
+            }
+        default:
+            return
+        }
     }
     
     @IBAction func toggleStats(sender: AnyObject? = nil) {

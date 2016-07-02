@@ -26,5 +26,5 @@ extension Path {
     @NSManaged var vessel: Vessel?
     @NSManaged var points: NSOrderedSet?
     @NSManaged var creator: Sailor?
-
+    @NSManaged var temporary: NSNumber?
 }

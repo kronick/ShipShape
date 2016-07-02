@@ -4,8 +4,9 @@
         <attribute name="averageSpeed" optional="YES" attributeType="Float" defaultValueString="0.0" syncable="YES"/>
         <attribute name="created" optional="YES" attributeType="Date" syncable="YES"/>
         <attribute name="notes" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="remoteID" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="remoteID" optional="YES" attributeType="String" indexed="YES" syncable="YES"/>
         <attribute name="state" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="temporary" optional="YES" attributeType="Boolean" defaultValueString="NO" syncable="YES"/>
         <attribute name="title" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="totalDistance" optional="YES" attributeType="Float" defaultValueString="0.0" syncable="YES"/>
         <attribute name="totalTime" optional="YES" attributeType="Float" defaultValueString="0.0" syncable="YES"/>
@@ -42,7 +43,7 @@
         <relationship name="paths" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Path" inverseName="vessel" inverseEntity="Path" syncable="YES"/>
     </entity>
     <elements>
-        <element name="Path" positionX="-36" positionY="-43" width="128" height="225"/>
+        <element name="Path" positionX="-36" positionY="-43" width="128" height="240"/>
         <element name="Point" positionX="151" positionY="-40" width="128" height="165"/>
         <element name="Sailor" positionX="-38" positionY="-229" width="128" height="118"/>
         <element name="Vessel" positionX="-243" positionY="-90" width="128" height="165"/>

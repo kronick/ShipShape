@@ -41,6 +41,7 @@ class Path: NSManagedObject {
         newPath.vessel = vessel
         newPath.creator = creator
         newPath.points = points
+        newPath.title = title
         
         return newPath
     }
@@ -94,13 +95,45 @@ class Path: NSManagedObject {
         
         return newPath
     }
+    
+    class func ClearCacheInContext(moc: NSManagedObjectContext) {
+        // Make sure a sailor is set to active or we'll delete everything
+        guard let activeSailor = Sailor.ActiveSailor else {
+            print("No active sailor set!!!")
+            return
+        }
+        let pathFetchRequest = NSFetchRequest(entityName: "Path")
+        pathFetchRequest.predicate = NSPredicate(format: "temporary == 1 AND creator != %@", argumentArray: [activeSailor])
+        do {
+            if let pathResults = try moc.executeFetchRequest(pathFetchRequest) as? [Path] {
+                //return pathResults
+                for p in pathResults {
+                    let title = p.title == nil ? "<untitled>" : p.title!
+                    print("Deleting cached path '\(title)'")
+                    moc.deleteObject(p)
+                }
+                
+                do {
+                    try moc.save()
+                }
+                catch {
+                    return
+                }
+            }
+        }
+        catch let error as NSError {
+            print("Could not fetch Paths \(error), \(error.userInfo)")
+        }
+        
+    }
   
     class func FetchPathsWithStateInContext(moc: NSManagedObjectContext, state: PathState) -> [Path] {
         let pathFetchRequest = NSFetchRequest(entityName: "Path")
         pathFetchRequest.predicate = NSPredicate(format: "state == %@", argumentArray: [state.rawValue])
         do {
-            let pathResults = try moc.executeFetchRequest(pathFetchRequest) as! [Path]
-            return pathResults
+            if let pathResults = try moc.executeFetchRequest(pathFetchRequest) as? [Path] {
+                return pathResults
+            }
         }
         catch let error as NSError {
             print("Could not fetch Paths \(error), \(error.userInfo)")
@@ -124,6 +157,21 @@ class Path: NSManagedObject {
         }
         
         return [Path]()
+    }
+    
+    
+    class func FetchPathWithRemoteIDInContext(moc: NSManagedObjectContext, remoteID: String) -> Path? {
+        let pathFetchRequest = NSFetchRequest(entityName: "Path")
+        pathFetchRequest.predicate = NSPredicate(format: "remoteID == %@", argumentArray: [remoteID])
+        do {
+            let pathResults = try moc.executeFetchRequest(pathFetchRequest) as! [Path]
+            return pathResults.count > 0 ? pathResults[0] : nil
+        }
+        catch let error as NSError {
+            print("Could not fetch Paths \(error), \(error.userInfo)")
+        }
+        
+        return nil
     }
     
     
