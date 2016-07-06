@@ -347,7 +347,7 @@
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Public" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="chx-NM-ghO">
                                 <rect key="frame" x="-42" y="-21" width="42" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="20"/>
-                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" keyboardDismissMode="onDrag" text="Notes" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="wbp-M8-5hf">
@@ -427,6 +427,11 @@
                                 <exclude reference="wbp-M8-5hf"/>
                             </mask>
                             <mask key="constraints">
+                                <exclude reference="Gol-2C-WZc"/>
+                                <exclude reference="cZz-nL-Cyy"/>
+                                <exclude reference="yGj-is-y6V"/>
+                                <exclude reference="9f5-xO-3oS"/>
+                                <exclude reference="ZsM-w6-wON"/>
                                 <exclude reference="98P-Me-VX1"/>
                                 <exclude reference="PQZ-8V-9Z7"/>
                                 <exclude reference="gCR-oV-xov"/>
@@ -434,11 +439,6 @@
                                 <exclude reference="6eL-AN-fS8"/>
                                 <exclude reference="Fb5-yU-FFs"/>
                                 <exclude reference="bcr-GM-D8G"/>
-                                <exclude reference="Gol-2C-WZc"/>
-                                <exclude reference="cZz-nL-Cyy"/>
-                                <exclude reference="yGj-is-y6V"/>
-                                <exclude reference="9f5-xO-3oS"/>
-                                <exclude reference="ZsM-w6-wON"/>
                             </mask>
                         </variation>
                         <variation key="heightClass=regular">
@@ -449,6 +449,11 @@
                                 <include reference="wbp-M8-5hf"/>
                             </mask>
                             <mask key="constraints">
+                                <include reference="Gol-2C-WZc"/>
+                                <include reference="cZz-nL-Cyy"/>
+                                <include reference="yGj-is-y6V"/>
+                                <include reference="9f5-xO-3oS"/>
+                                <exclude reference="ZsM-w6-wON"/>
                                 <include reference="98P-Me-VX1"/>
                                 <include reference="PQZ-8V-9Z7"/>
                                 <include reference="gCR-oV-xov"/>
@@ -456,11 +461,6 @@
                                 <include reference="6eL-AN-fS8"/>
                                 <include reference="Fb5-yU-FFs"/>
                                 <include reference="bcr-GM-D8G"/>
-                                <include reference="Gol-2C-WZc"/>
-                                <include reference="cZz-nL-Cyy"/>
-                                <include reference="yGj-is-y6V"/>
-                                <include reference="9f5-xO-3oS"/>
-                                <exclude reference="ZsM-w6-wON"/>
                             </mask>
                         </variation>
                     </view>

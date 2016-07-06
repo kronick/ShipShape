@@ -102,14 +102,18 @@ class Path: NSManagedObject {
             print("No active sailor set!!!")
             return
         }
+        print(activeSailor)
+        
         let pathFetchRequest = NSFetchRequest(entityName: "Path")
-        pathFetchRequest.predicate = NSPredicate(format: "temporary == 1 AND creator != %@", argumentArray: [activeSailor])
+        pathFetchRequest.predicate = NSPredicate(format: "temporary == 1 AND (creator != %@ OR creator == nil)", argumentArray: [activeSailor])
+        //pathFetchRequest.predicate = NSPredicate(format: "temporary == 1", argumentArray: [])
         do {
             if let pathResults = try moc.executeFetchRequest(pathFetchRequest) as? [Path] {
                 //return pathResults
                 for p in pathResults {
                     let title = p.title == nil ? "<untitled>" : p.title!
                     print("Deleting cached path '\(title)'")
+                    print(p.creator)
                     moc.deleteObject(p)
                 }
                 

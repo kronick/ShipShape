@@ -30,8 +30,8 @@ class RemoteAPIManager : NSObject {
     let apiBase = "https://u26f5.net/api/v0.1/"
     
     // TODO: Integrate this with registration/login flow - Should ask for credentials (again) if a auth fails
-    var username = "Sam"
-    var password = "testingthis"
+    var username = ""
+    var password = ""
     
     private override init() {
         super.init()
@@ -244,7 +244,12 @@ class RemoteAPIManager : NSObject {
                     // TODO: Get vessel and sailor, download if needed
                     let vessel: Vessel? = nil
                     var sailor: Sailor? = nil
-                                        
+                    
+                    let creator = path["creator"]["username"].string
+                    print(creator)
+                    if creator != nil && creator != "" {
+                        sailor = Sailor.FetchByUsernameInContext(moc, username: creator!)
+                    }
                     
                     // Create the managed object
                     let newPath = Path.CreateInContext(moc, title: title, created: created, remoteID: id, notes: notes, totalTime: totalTime, totalDistance: totalDistance, averageSpeed: averageSpeed, type: type, state: state, vessel: vessel, creator: sailor, points: nil)
