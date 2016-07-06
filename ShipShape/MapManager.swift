@@ -10,6 +10,7 @@
 
 import Foundation
 import Mapbox
+import CoreData
 
 protocol MapCalloutDelegate {
     func showCalloutForPath(path: Path, atPoint: CGPoint, inMapView: UIView)
@@ -20,10 +21,11 @@ class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
     // Retreive the main NSManagedObjectContext from AppDelegate
     let appDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
     let mainManagedObjectContext = (UIApplication.sharedApplication().delegate as! AppDelegate).managedObjectContext
+    let backgroundMOC: NSManagedObjectContext!
     
     var pathAnnotations = [Path:PathAnnotation]()   // Holds a list of PathAnnotations indexed by Path instances
     var pathAnnotationSegmentStyles = [MGLPolyline:PathAnnotationSegmentStyle]()    // Holds style info for each path segment. Must be updated in concert with pathAnnotations!!
-    var tappablePathPoints = [(CGPoint, Path)]()  // Holds a list of points that are currently on screen and potentially tappable
+    var tappablePathPoints = [(CGPoint, NSManagedObjectID)]()  // Holds a list of points that are currently on screen and potentially tappable
     var selectedPointAnnotation: MGLPointAnnotation?
     
     var mapView: MGLMapView? = nil
@@ -55,15 +57,18 @@ class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
     init(mapView: MGLMapView?) {
         
         self.initialAnnotationsToDisplay = [MGLPolyline]()
-        super.init()
         
         self.mapView = mapView
+        
+        // Set up a background ManagedObjectContext to process Point and Path data in the background
+        self.backgroundMOC = NSManagedObjectContext(concurrencyType: .PrivateQueueConcurrencyType)
+        super.init()
+        self.backgroundMOC.parentContext = self.mainManagedObjectContext
         
         self.mapOverlay = AnimatedMapOverlay(mapManager: self)
         //self.mapView?.addSubview(self.mapOverlay!)
         
         self.mapView?.delegate = self
-        
         
         // Set up tap gesture to select routes
         // But first set up a double tap that does nothing, just so we can ignore it and Mapbox's double tap handling
@@ -75,6 +80,7 @@ class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
         tapGesture.numberOfTapsRequired = 1
         //tapGesture.requireGestureRecognizerToFail(doubleTapGesture)
         self.mapView?.addGestureRecognizer(tapGesture)
+        
         
     }
     
@@ -125,48 +131,52 @@ class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
     
         self.tappablePathPoints.removeAll()
         
-        // Do this calculation on a background thread
-        dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0)) { [unowned self] in
-            var newTappablePathPoints = [(CGPoint, Path)]()
-            let paths = self.pathAnnotations.keys
-            
+        // Do this calculation on a background thread in a separate ManagedObjectContext
+        
+        // First, we need to get the object IDs of the paths in the current MOC
+        let pathIDs = self.pathAnnotations.keys.map { $0.objectID }
+        
+        self.backgroundMOC.performBlock {   // Do all this work in the proper queue for this MOC
+            var newTappablePathPoints = [(CGPoint, NSManagedObjectID)]()
+            let paths = pathIDs.map { self.backgroundMOC.objectWithID($0) as? Path }
             for path in paths {
+                guard let points = path?.points, path = path else { continue }
                 var lastPoint: CGPoint? = nil   // Used to calculate segment distance
-                if let points = path.points {
-                    for p in points {   // TODO: Need to cache points before going to a background thread; crashes EXC_BAD_ACCESS here sometimes -- use NSManagedObjectID ?
-                        if let point = p as? Point {
-                            let coordinate = CLLocationCoordinate2D(latitude: point.latitude! as Double, longitude: point.longitude! as Double)
-                            let position = self.mapView!.convertCoordinate(coordinate, toPointToView: self.mapView)
+                
+                for p in points {
+                    if let point = p as? Point {
+                        let latitude = point.latitude! as Double
+                        let longitude = point.longitude! as Double
+                        let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+                        let position = self.mapView!.convertCoordinate(coordinate, toPointToView: self.mapView)
                         
-                            // Filter out points that are very close together
-                            var addPoint = false
-                            var distanceSquared: CGFloat?
-                            if let last = lastPoint {
-                                distanceSquared = (last.x-position.x)*(last.x-position.x) + (last.y-position.y)*(last.y-position.y)
-                                if distanceSquared > 64 {
-                                    addPoint = true
-                                }
-                            }
-                            else {
+                        // Filter out points that are very close together
+                        var addPoint = false
+                        var distanceSquared: CGFloat?
+                        if let last = lastPoint {
+                            distanceSquared = (last.x-position.x)*(last.x-position.x) + (last.y-position.y)*(last.y-position.y)
+                            if distanceSquared > 64 {
                                 addPoint = true
                             }
-                            if addPoint {
-                                if self.mapView!.frame.contains(position) {
-                                   newTappablePathPoints.append((position, path))
-                                }
-                                lastPoint = position
-                            }
-                    
                         }
-                        
-                    }
-                    
-                    // Add the points back in on the main thread
-                    dispatch_async(dispatch_get_main_queue()) { [unowned self] in
-                        self.tappablePathPoints = newTappablePathPoints
+                        else {
+                            addPoint = true
+                        }
+                        if addPoint {
+                            if self.mapView!.frame.contains(position) {
+                                newTappablePathPoints.append((position, path.objectID))
+                            }
+                            lastPoint = position
+                        }
                     }
                 }
             }
+            
+            // Add the points back in on the main thread
+            dispatch_async(dispatch_get_main_queue()) { [unowned self] in
+                self.tappablePathPoints = newTappablePathPoints
+            }
+            
         }
     }
     
@@ -189,28 +199,31 @@ class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
         
         
         // Look up the closest path/point in a background thread
-        dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0)) { [unowned self] in
+        // Need to create a separate NSManagedObjectContext and reference by objectID
+        let moc = NSManagedObjectContext(concurrencyType: .PrivateQueueConcurrencyType)
+        moc.parentContext = self.mainManagedObjectContext
+        moc.performBlock {   // Do all this work in the proper queue for this MOC
             var closestDistance = CGFloat.max
-            var closestPath: Path? = nil
+            var closestPathID: NSManagedObjectID? = nil
             var closestPoint: CGPoint? = nil
             
             for pathPoint in self.tappablePathPoints {
                 let p = pathPoint.0
-                let path = pathPoint.1
+                let pathID = pathPoint.1
                 
                 let distanceSquared = (location.x - p.x) * (location.x - p.x) + (location.y - p.y) * (location.y - p.y)
                 if distanceSquared < self.tappableThresholdSquared && distanceSquared < closestDistance {
-                    closestPath = path
+                    closestPathID = pathID
                     closestDistance = distanceSquared
                     closestPoint = p
                 }
             }
             
-            if let closestPath = closestPath, closestPoint = closestPoint {
-                print(closestPath.title)
-                
+            if let closestPathID = closestPathID, closestPoint = closestPoint {
                 dispatch_async(dispatch_get_main_queue()) { [unowned self] in
                     guard let delegate = self.calloutDelegate, mapView = self.mapView else { return }
+                    guard let closestPath = self.mainManagedObjectContext.objectWithID(closestPathID) as? Path else { return }
+                    print("Tapped on path: \(closestPath.title)")
                     
                     delegate.showCalloutForPath(closestPath, atPoint: closestPoint, inMapView: mapView)
                 }
