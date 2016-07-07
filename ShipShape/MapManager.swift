@@ -41,6 +41,9 @@ class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
     
     var calloutDelegate: MapCalloutDelegate? = nil
 
+    var pathsInViewSearchTimer: NSTimer?
+    let pathSearchTimeout: NSTimeInterval = 0.3
+    
     var colorIndexer = 0 as Int
     var colorPalette = [
         UIColor(red: 238/255, green: 62/255, blue: 62/255, alpha: 1),
@@ -66,7 +69,7 @@ class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
         self.backgroundMOC.parentContext = self.mainManagedObjectContext
         
         self.mapOverlay = AnimatedMapOverlay(mapManager: self)
-        //self.mapView?.addSubview(self.mapOverlay!)
+        self.mapView?.addSubview(self.mapOverlay!)
         
         self.mapView?.delegate = self
         
@@ -410,7 +413,59 @@ class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
     }
     
     
-    
+    func getPathsInView() {
+        guard let mapView = self.mapView else { return }
+        
+        // Search for paths in viewport
+        let a = mapView.convertPoint(CGPoint(x:0, y:0), toCoordinateFromView: mapView)
+        let b = mapView.convertPoint(CGPoint(x:mapView.frame.width, y:0), toCoordinateFromView: mapView)
+        let c = mapView.convertPoint(CGPoint(x:mapView.frame.width, y:mapView.frame.height), toCoordinateFromView: mapView)
+        let d = mapView.convertPoint(CGPoint(x:0, y:mapView.frame.height), toCoordinateFromView: mapView)
+        
+        RemoteAPIManager.sharedInstance.getPathsInBounds(a, b, c, d,
+            afterEach: { pathID in
+                // This block is called after each path is ready to be added to the map
+                // The pathID parameter is a CoreData NSManagedObjectID that needs to be re-associated with the main managedobjectcontext back on the main thread
+                dispatch_async(dispatch_get_main_queue()) {
+                    guard let path = self.mainManagedObjectContext.objectWithID(pathID) as? Path else {
+                        NSLog("MapManager: Received a bad objectID for a path in bounds")
+                        return
+                    }
+                    
+                    //if path.creator != Sailor.ActiveSailor { // Only flag other peoples' paths as temporary
+                    path.temporary = true // Flag as temporary so we can remove it from the cache later
+                    // }
+                    
+                    // Add this path to the map only if it isn't already being displayed
+                    if !self.pathAnnotations.keys.contains(path) {
+                        self.addAnnotationForPath(path)
+                    }
+                
+                }
+            },
+            completion: { pathIDs in
+                // This is called once all paths are ready with a list of ObjectIDs of the paths that are in bounds.
+                // Remove any annotations for paths that are not in view.
+                dispatch_async(dispatch_get_main_queue()) {
+                    NSLog("MapManager: Paths in bounds download complete.")
+                    var freshPaths = [Path]()  // List of freshly received paths
+                    for p in pathIDs {
+                        if let path = self.mainManagedObjectContext.objectWithID(p) as? Path {
+                            freshPaths.append(path)
+                        }
+                    }
+                    
+                    // Now delete any old temporary paths that aren't in the fresh list
+                    for path in self.pathAnnotations.keys {
+                        if path.temporary == true && !freshPaths.contains(path) && path.creator != Sailor.ActiveSailor {
+                            self.removeAnnotationForPath(path)
+                        }
+                    }
+                    
+                    NSLog("MapManager: All paths added to the map")
+                }
+            })
+    }
     
     
     // MARK: - MGLMapViewDelegate
@@ -420,50 +475,17 @@ class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
         if let delegate = self.calloutDelegate {
             delegate.dismissCallout()
         }
+        
+        // Cancel any pending paths-in-view searches
+        self.pathsInViewSearchTimer?.invalidate()
     }
     func mapView(mapView: MGLMapView, regionDidChangeAnimated animated: Bool) {
         mapOverlay?.fadeInCurves()
         self.updateTappablePoints()
         
-        // Search for paths in viewport
-        let a = mapView.convertPoint(CGPoint(x:0, y:0), toCoordinateFromView: mapView)
-        let b = mapView.convertPoint(CGPoint(x:mapView.frame.width, y:0), toCoordinateFromView: mapView)
-        let c = mapView.convertPoint(CGPoint(x:mapView.frame.width, y:mapView.frame.height), toCoordinateFromView: mapView)
-        let d = mapView.convertPoint(CGPoint(x:0, y:mapView.frame.height), toCoordinateFromView: mapView)
-        
-        RemoteAPIManager.sharedInstance.getPathsInBounds(a, b, c, d, completion: { pathIDs in
-            // This completion callback is called asynchronously and contains CoreData ObjectIDs that need to be re-associated with the main managedobjectcontext
-            // So we need to de-reference the ObjectIDs and add in new paths back on the main thread
-            dispatch_async(dispatch_get_main_queue()) {
-                NSLog("MapManager: Paths in bounds download complete.")
-                var freshPaths = [Path]()  // List of freshly received paths
-                for p in pathIDs {
-                    if let path = self.mainManagedObjectContext.objectWithID(p) as? Path {
-                        if path.creator != Sailor.ActiveSailor {
-                            // Only add other peoples' paths
-                            path.temporary = true // Flag as temporary so we can remote it later
-                            
-                            // Add this path to the map only if it isn't already being displayed
-                            if !self.pathAnnotations.keys.contains(path) {
-                                self.addAnnotationForPath(path)
-                            }
-                            
-                            // Keep this path fresh
-                            freshPaths.append(path)
-                        }
-                    }
-                }
-                
-                // Now delete any old temporary paths that aren't in the fresh list
-                for path in self.pathAnnotations.keys {
-                    if path.temporary == true && !freshPaths.contains(path) {
-                        self.removeAnnotationForPath(path)
-                    }
-                }
-                
-                NSLog("MapManager: All paths added to the map")
-            }
-        })
+        // Search for paths in bound of the new view, but wait 0.5 seconds to filter out short pauses
+        self.pathsInViewSearchTimer = NSTimer.scheduledTimerWithTimeInterval(self.pathSearchTimeout, target: self, selector: #selector(getPathsInView), userInfo: nil, repeats: false)
+
     }
     
     func mapViewDidFinishLoadingMap(mapView: MGLMapView) {

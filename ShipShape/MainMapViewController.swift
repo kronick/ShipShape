@@ -82,8 +82,6 @@ class MainMapViewController: UIViewController, CLLocationManagerDelegate, MapCal
             self.mapManager?.addAnnotationForPath(p)
             //p.remoteID = nil
         }
-        appDelegate.saveContext()
-        
     }
     
     override func viewDidAppear(animated: Bool) {

@@ -26,6 +26,7 @@ class RemoteAPIManager : NSObject {
     // Retreive the managedObjectContext from AppDelegate
     let appDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
     let mainManagedObjectContext = (UIApplication.sharedApplication().delegate as! AppDelegate).managedObjectContext
+    let backgroundManagedObjectContext: NSManagedObjectContext!
     
     let apiBase = "https://u26f5.net/api/v0.1/"
     
@@ -33,8 +34,14 @@ class RemoteAPIManager : NSObject {
     var username = ""
     var password = ""
     
+    // Used to invalidate old asynchronous requests if a newer one has been requested in the meantime
+    var lastPathInBoundsRequest: NSDate?
+    var activePathDownloads = [String]()    // Used to avoid downloading two of the same track at the same time
+    
     private override init() {
+        self.backgroundManagedObjectContext = NSManagedObjectContext(concurrencyType: .PrivateQueueConcurrencyType)
         super.init()
+        self.backgroundManagedObjectContext.parentContext = self.mainManagedObjectContext
     }
     
     func getAuthHeader(username: String? = nil, password: String? = nil) -> [String: String] {
@@ -202,22 +209,43 @@ class RemoteAPIManager : NSObject {
         
     }
     
+    func startPathDownloadWithID(remoteID: String) -> Bool{
+        if self.activePathDownloads.contains(remoteID) {
+            return false
+        }
+        else {
+            self.activePathDownloads.append(remoteID)
+            return true
+        }
+    }
+    func finishPathDownloadWithID(remoteID: String) {
+        self.activePathDownloads = self.activePathDownloads.filter { $0 != remoteID }
+    }
+    
     func getPathByID(remoteID: String, includePoints: Bool = true, completion: (pathID: NSManagedObjectID?) -> Void) {
         let modifier = includePoints ? "" : "metadata"
         let endpoint = self.apiBase + "paths/" + remoteID + "/" + modifier
         
-        print("getPathByID: Downloading path \(remoteID)")
+        guard self.startPathDownloadWithID(remoteID) else {
+            print("getPathByID: This path is already being downloaded: \(remoteID)")
+            completion(pathID: nil)
+            return
+        }
+        
+        NSLog("getPathByID: Downloading path \(remoteID)")
         
         Alamofire.request(.GET, endpoint,
                           headers: self.getAuthHeader())
             .responseJSON(queue: dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), completionHandler: { response in
                 guard response.result.error == nil else {
                     print("getPathByID: Error downloading path: \(response.result.error!)")
+                    self.finishPathDownloadWithID(remoteID)
                     completion(pathID: nil)
                     return
                 }
                 guard let value = response.result.value else {
                     print("getPathByID: No response.")
+                    self.finishPathDownloadWithID(remoteID)
                     completion(pathID: nil)
                     return
                 }
@@ -225,34 +253,14 @@ class RemoteAPIManager : NSObject {
                 let path = JSON(value)
                 
                 
-                // Create temporary CoreData ManagedObjectContext to save these results
-                // Set the parent to the main MOC so the results can be merged in on the main thread
-                let moc = NSManagedObjectContext(concurrencyType: .PrivateQueueConcurrencyType)
-                moc.parentContext = self.mainManagedObjectContext
-                moc.performBlockAndWait {   // Do all this work in the proper queue for this MOC
-                    let title = path["title"].string
-                    print("getPathByID: Downloaded '\(title)'")
-                    // Parse the JSON for this path's metadata and get it ready to store as a managed object
-                    let created = NSDate.init(timeIntervalSince1970: path["created"].doubleValue)
-                    let id = path["_id"].stringValue
-                    let notes = path["notes"].string
-                    let totalTime = path["totalTime"].double
-                    let totalDistance = path["totalDistance"].double
-                    let averageSpeed = path["averageSpeed"].double
-                    let type = PathType(rawValue: path["type"].stringValue)
-                    let state = PathState(rawValue: path["state"].stringValue)
-                    // TODO: Get vessel and sailor, download if needed
-                    let vessel: Vessel? = nil
-                    var sailor: Sailor? = nil
+                // Do this in a background thread
+                self.backgroundManagedObjectContext.performBlockAndWait {   // Do all this work in the proper queue for this MOC
+                    let metadata = self.parsePathJSON(path, moc: self.backgroundManagedObjectContext)
                     
-                    let creator = path["creator"]["username"].string
-                    print(creator)
-                    if creator != nil && creator != "" {
-                        sailor = Sailor.FetchByUsernameInContext(moc, username: creator!)
-                    }
+                    NSLog("getPathByID: Downloaded '\(metadata.title)' (\(metadata.remoteID))")
                     
                     // Create the managed object
-                    let newPath = Path.CreateInContext(moc, title: title, created: created, remoteID: id, notes: notes, totalTime: totalTime, totalDistance: totalDistance, averageSpeed: averageSpeed, type: type, state: state, vessel: vessel, creator: sailor, points: nil)
+                    let newPath = Path.CreateFromMetadataInContext(self.backgroundManagedObjectContext, metadata: metadata)
                     
                     // Now process the points and add them to this path
                     let pointsArray = path["points"].arrayValue
@@ -264,16 +272,18 @@ class RemoteAPIManager : NSObject {
                         let notes = p["notes"].string
                         
                         // Create the point in the temporary managed object context
-                        Point.CreateInContext(moc, latitude: latitude, longitude: longitude, timestamp: pointCreation, propulsion: propulsion, remoteID: nil, notes: notes, path: newPath)
+                        Point.CreateInContext(self.backgroundManagedObjectContext, latitude: latitude, longitude: longitude, timestamp: pointCreation, propulsion: propulsion, remoteID: nil, notes: notes, path: newPath)
                     }
                     
                     do {
-                        try moc.save()
+                        try self.backgroundManagedObjectContext.save()
                         // Call the completion callback with the created object ID
+                        self.finishPathDownloadWithID(remoteID)
                         completion(pathID: newPath.objectID)
                     }
                     catch {
                         print("getPathByID: Error saving temporary managed object context.")
+                        self.finishPathDownloadWithID(remoteID)
                         completion(pathID: nil)
                         return
                     }
@@ -282,7 +292,10 @@ class RemoteAPIManager : NSObject {
         )
     }
     
-    func getPathsInBounds(a: CLLocationCoordinate2D, _ b: CLLocationCoordinate2D, _ c: CLLocationCoordinate2D, _ d: CLLocationCoordinate2D, completion: (pathIDs: [NSManagedObjectID]) -> Void) {
+    func getPathsInBounds(a: CLLocationCoordinate2D, _ b: CLLocationCoordinate2D, _ c: CLLocationCoordinate2D, _ d: CLLocationCoordinate2D, afterEach: (pathID: NSManagedObjectID) -> Void, completion: (pathIDs: [NSManagedObjectID]) -> Void) {
+        // Update timestamp on most recent request so this one stays fresh until another one comes along
+        let requestTime = NSDate.init()
+        self.lastPathInBoundsRequest = requestTime
         
         let endpoint = self.apiBase + "paths/in/\(a.longitude),\(a.latitude),\(b.longitude),\(b.latitude),\(c.longitude),\(c.latitude),\(d.longitude),\(d.latitude)"
         
@@ -303,11 +316,14 @@ class RemoteAPIManager : NSObject {
                     completion(pathIDs: [])
                     return
                 }
-                // Create temporary CoreData ManagedObjectContext to save these results
-                // Set the parent to the main MOC so the results can be merged in on the main thread
-                let moc = NSManagedObjectContext(concurrencyType: .PrivateQueueConcurrencyType)
-                moc.parentContext = self.mainManagedObjectContext
-                moc.performBlockAndWait {   // Do all this work in the proper queue for this MOC
+                
+                guard self.lastPathInBoundsRequest == requestTime else {
+                    print("getPathsInBounds: Old request-- too slow!")
+                    return
+                }
+                
+                // Don't block the main thread-- do this in the background Managed Object Context
+                self.backgroundManagedObjectContext.performBlockAndWait {   // Do all this work in the proper queue for this MOC
                     let json = JSON(value)
                     let paths = json["paths"].arrayValue
                     
@@ -318,24 +334,36 @@ class RemoteAPIManager : NSObject {
                     
                     print("getPathsInBounds: Found these paths in range:")
                     for p in paths {
-                        print(p["title"].stringValue + " (" + p["_id"].stringValue + ")")
+                        let metadata = self.parsePathJSON(p, moc: self.backgroundManagedObjectContext)
+                        if let title = metadata.title, id = metadata.remoteID {
+                            print("> \(title) (\(id))")
+                        }
                         
                         // For each path, see if it already exists in the local store
-                        let remoteID = p["_id"].stringValue
-                        if let localPath = Path.FetchPathWithRemoteIDInContext(moc, remoteID: remoteID) {
+                        guard let remoteID = metadata.remoteID else { continue }
+                        if let localPath = Path.FetchPathWithRemoteIDInContext(self.backgroundManagedObjectContext, remoteID: remoteID) {
                             // This Path already exists locally
-                            // TODO: Update/sync metadata
-                            // Add this path's objectID to the array
+                            // So just update its metadata
+                            localPath.updateWithMetadata(metadata)
+                            do {
+                                try self.backgroundManagedObjectContext.save()
+                            }
+                            catch {
+                                NSLog("getPathsInBounds: Uunable to save background context!")
+                            }
+                            // And add this path's objectID to the array
                             pathIDs.append(localPath.objectID)
+                            afterEach(pathID: localPath.objectID)
                         }
                         else {
                             // A path with this remoteID does not exist. Download it
                             dispatch_group_enter(pathDownloadGroup)
                             self.getPathByID(remoteID, completion: { objectID in
                                 // Put the downloaded path's local CoreData objectID into the list
-                                if let id = objectID {
-                                    pathIDs.append(id)
-                                }
+                                guard let id = objectID else { return }
+                                pathIDs.append(id)
+                                afterEach(pathID: id)
+                            
                                 dispatch_group_leave(pathDownloadGroup)
                             })
                         }
@@ -345,6 +373,11 @@ class RemoteAPIManager : NSObject {
                     //dispatch_group_wait(pathDownloadGroup, DISPATCH_TIME_FOREVER)
                     dispatch_group_notify(pathDownloadGroup, dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), {
                         // Now call the completion callback with the objectIDs of all the paths
+                        guard self.lastPathInBoundsRequest == requestTime else {
+                            print("getPathsInBounds: Old request-- too slow!")
+                            return
+                        }
+                        
                         completion(pathIDs: pathIDs)
                     })
                     
@@ -353,6 +386,31 @@ class RemoteAPIManager : NSObject {
             
             }
         )
+    }
+    
+    // MARK: - JSON -> Managed Object parsing
+    func parsePathJSON(json: JSON, moc: NSManagedObjectContext) -> PathMetadata {
+        // Parse the JSON for this path's metadata an return a dictionary with guaranteed-good values
+        var metadata = PathMetadata()
+        metadata.title = json["title"].string
+        metadata.created = NSDate.init(timeIntervalSince1970: json["created"].doubleValue)
+        metadata.remoteID = json["_id"].stringValue
+        metadata.notes = json["notes"].string
+        metadata.totalTime = json["totalTime"].double
+        metadata.totalDistance = json["totalDistance"].double
+        metadata.averageSpeed = json["averageSpeed"].double
+        metadata.type = PathType(rawValue: json["type"].stringValue)
+        metadata.state = PathState(rawValue: json["state"].stringValue)
+        // TODO: Get vessel and sailor, download if needed
+        metadata.vessel = nil
+        metadata.sailor = nil
+        
+        let creator = json["creator"]["username"].string
+        if creator != nil && creator != "" {
+            metadata.sailor = Sailor.FetchByUsernameInContext(moc, username: creator!)
+        }
+        
+        return metadata
     }
     
 }

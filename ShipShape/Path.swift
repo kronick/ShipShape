@@ -23,6 +23,20 @@ public enum PathState: String {
     case Fault = "fault"
 }
 
+struct PathMetadata {
+    var created: NSDate?
+    var remoteID: String?
+    var title: String?
+    var notes: String?
+    var totalTime: NSNumber?
+    var totalDistance: NSNumber?
+    var averageSpeed: NSNumber?
+    var type: PathType?
+    var state: PathState?
+    var vessel: Vessel?
+    var sailor: Sailor?
+}
+
 class Path: NSManagedObject {
     
     // MARK: - Class methods to create and fetch
@@ -44,6 +58,10 @@ class Path: NSManagedObject {
         newPath.title = title
         
         return newPath
+    }
+    
+    class func CreateFromMetadataInContext(moc: NSManagedObjectContext, metadata: PathMetadata) -> Path {
+        return CreateInContext(moc, title: metadata.title, created: metadata.created, remoteID: metadata.remoteID, notes: metadata.notes, totalTime: metadata.totalTime, totalDistance: metadata.totalDistance, averageSpeed: metadata.averageSpeed, type: metadata.type, state: metadata.state, vessel: metadata.vessel, creator: metadata.sailor)
     }
     
     class func CreateFromGeoJSONInContext(moc: NSManagedObjectContext, filename: String, title: String? = nil, creator: Sailor? = Sailor.ActiveSailor, created: NSDate? = NSDate(), saveOnComplete: Bool = true, completion: ()->() = {}) -> Path {
@@ -113,7 +131,7 @@ class Path: NSManagedObject {
                 for p in pathResults {
                     let title = p.title == nil ? "<untitled>" : p.title!
                     print("Deleting cached path '\(title)'")
-                    print(p.creator)
+                    //print(p.creator)
                     moc.deleteObject(p)
                 }
                 
@@ -180,7 +198,26 @@ class Path: NSManagedObject {
     
     
     // MARK: - Instance methods
+    func updateWithMetadata(metadata: PathMetadata) {
+        // Update this object's properties with the non-nil entries in the provided PathMetadata struct
+        if metadata.created != nil { self.created = metadata.created }
+        if metadata.remoteID != nil { self.remoteID = metadata.remoteID }
+        if metadata.title != nil { self.title = metadata.title }
+        if metadata.notes != nil { self.notes = metadata.notes }
+        if metadata.totalTime != nil { self.totalTime = metadata.totalTime }
+        if metadata.totalDistance != nil { self.totalDistance = metadata.totalDistance }
+        if metadata.averageSpeed != nil { self.averageSpeed = metadata.averageSpeed }
+        if metadata.type != nil { self.type = metadata.type?.rawValue }
+        if metadata.state != nil { self.state = metadata.state?.rawValue }
+        if metadata.vessel != nil { self.vessel = metadata.vessel }
+        if metadata.sailor != nil { self.creator = metadata.sailor }
+    }
     
+    func getMetadata() -> PathMetadata {
+        let type = self.type == nil ? nil : PathType(rawValue: self.type!)
+        let state = self.state == nil ? nil : PathState(rawValue: self.state!)
+        return PathMetadata(created: self.created, remoteID: self.remoteID, title: self.title, notes: self.notes, totalTime: self.totalTime, totalDistance: self.totalDistance, averageSpeed: self.averageSpeed, type: type, state: state, vessel: self.vessel, sailor: self.creator)
+    }
     func recalculateStats() {
         if self.points == nil || self.points!.count == 0 {
             self.totalTime = 0
