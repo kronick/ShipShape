@@ -18,6 +18,18 @@ public enum PropulsionMethod: String {
     case Anchor
     case None
 }
+
+struct UnmanagedPoint {
+    var latitude: NSNumber?
+    var longitude: NSNumber?
+    var propulsion: String?
+    var remoteID: String?
+    var created: NSDate?
+    var notes: String?
+    var objectID: NSManagedObjectID?
+    var pathObjectID: NSManagedObjectID?
+}
+
 class Point: NSManagedObject {
     class func CreateInContext(moc: NSManagedObjectContext, location: CLLocation, propulsion: PropulsionMethod? = .Sail, remoteID: String? = nil, notes: String? = nil, path: Path? = nil) -> Point {
         let createdPoint = NSEntityDescription.insertNewObjectForEntityForName("Point", inManagedObjectContext: moc) as! Point
@@ -47,6 +59,11 @@ class Point: NSManagedObject {
         createdPoint.path = path
         
         return createdPoint
+    }
+    
+    func unmanagedCopy() -> UnmanagedPoint {
+        // Returns a copy of this point's data that is not managed by an NSManagedObjectContext and is safe to access in any thread
+        return UnmanagedPoint(latitude: self.latitude, longitude: self.longitude, propulsion: self.propulsion, remoteID: self.remoteID, created: self.created, notes: self.notes, objectID: self.objectID, pathObjectID: self.path?.objectID)
     }
     
     func location() -> CLLocation? {

@@ -49,7 +49,7 @@ class TrackDetailViewController: UIViewController, UITextFieldDelegate, UITextVi
         
         mapView.setUserTrackingMode(MGLUserTrackingMode.Follow, animated: true)
         self.mapManager = MapManager(mapView: self.mapView)
-        
+        self.mapManager?.searchForOtherPaths = false
         
         if let t = self.activePath?.title {
             self.title = t

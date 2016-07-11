@@ -236,7 +236,8 @@ class RemoteAPIManager : NSObject {
         
         Alamofire.request(.GET, endpoint,
                           headers: self.getAuthHeader())
-            .responseJSON(queue: dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), completionHandler: { response in
+            //.responseJSON(queue: dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0), completionHandler: { response in
+        .responseJSON { response in
                 guard response.result.error == nil else {
                     print("getPathByID: Error downloading path: \(response.result.error!)")
                     self.finishPathDownloadWithID(remoteID)
@@ -254,7 +255,7 @@ class RemoteAPIManager : NSObject {
                 
                 
                 // Do this in a background thread
-                self.backgroundManagedObjectContext.performBlockAndWait {   // Do all this work in the proper queue for this MOC
+                self.backgroundManagedObjectContext.performBlock {   // Do all this work in the proper queue for this MOC
                     let metadata = self.parsePathJSON(path, moc: self.backgroundManagedObjectContext)
                     
                     NSLog("getPathByID: Downloaded '\(metadata.title)' (\(metadata.remoteID))")
@@ -289,7 +290,7 @@ class RemoteAPIManager : NSObject {
                     }
                 }
             }
-        )
+        //)
     }
     
     func getPathsInBounds(a: CLLocationCoordinate2D, _ b: CLLocationCoordinate2D, _ c: CLLocationCoordinate2D, _ d: CLLocationCoordinate2D, afterEach: (pathID: NSManagedObjectID) -> Void, completion: (pathIDs: [NSManagedObjectID]) -> Void) {
@@ -318,12 +319,18 @@ class RemoteAPIManager : NSObject {
                 }
                 
                 guard self.lastPathInBoundsRequest == requestTime else {
-                    print("getPathsInBounds: Old request-- too slow!")
+                    print("getPathsInBounds: Old request-- too slow! Not even going to check on these paths.")
                     return
                 }
                 
                 // Don't block the main thread-- do this in the background Managed Object Context
-                self.backgroundManagedObjectContext.performBlockAndWait {   // Do all this work in the proper queue for this MOC
+                self.backgroundManagedObjectContext.performBlock {   // Do all this work in the proper queue for this MOC
+                    // Check again once this is actually running
+                    guard self.lastPathInBoundsRequest == requestTime else {
+                        print("getPathsInBounds: Old request-- too slow! Not even going to check on these paths.")
+                        return
+                    }
+                    
                     let json = JSON(value)
                     let paths = json["paths"].arrayValue
                     

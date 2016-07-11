@@ -9,164 +9,187 @@
 import Foundation
 import UIKit
 import Mapbox
+import GLKit
 
-class AnimatedMapOverlay : UIView {
-    let duplicatePointDistanceSquared = 8*8 as CGFloat
-    var curves: [UIBezierPath]
-    var animations: [CAKeyframeAnimation]
-    var boatViews = [UITextView]()
-    //var coordinates: [[CGPoint]]
+class PathAnimation {
+    var points = [CGPoint]()
+    var pointArray = [GLfloat]() // Capacity equals 2x size of points array; this is the raw data that's passed on to the shader
+    var colorArray = [GLfloat]() // 4 floats per point vertex
+    var VBO: GLuint = 0
+    var progress: CGFloat = 0
+    var startTime: NSDate?
+    var duration: NSTimeInterval?
+    
+}
+
+class AnimatedMapOverlay : GLKView, GLKViewDelegate, GLKViewControllerDelegate {
+    let duplicatePointDistanceSquared = 2*2 as CGFloat
+    var animations =  [PathAnimation]()
     var mapManager: MapManager
-    var curvesAreDirty = false
+    
+    var viewController: GLKViewController!
+    
+    var renderingEffect = GLKBaseEffect()
+    var mapIsChanging = false
+    var mapViewVersion = 0 // Counter to tie paths to only one version of the map view
     
     init(mapManager: MapManager) {
         self.mapManager = mapManager
-        self.curves = [UIBezierPath]()
-        //self.boatViews = [UITextView]()
-        self.animations = [CAKeyframeAnimation]()
-        super.init(frame: mapManager.mapView!.frame)
+        self.viewController = GLKViewController()
+        super.init(frame: mapManager.mapView!.superview?.frame ?? mapManager.mapView!.frame)
+        self.delegate = self
+        self.context = EAGLContext(API: .OpenGLES2)
+        
         self.backgroundColor = UIColor.clearColor()
+        self.viewController.view = self
+        self.viewController.delegate = self
+        self.viewController.preferredFramesPerSecond = 60
+        
+        // Set up the projection matrix to match the mapView's coordinate system
+        
+        self.renderingEffect.transform.projectionMatrix = GLKMatrix4MakeOrtho(
+            0, Float(self.frame.width), Float(self.frame.height), 0,  -1024, 1024
+        )
+        
+        self.drawableMultisample = .Multisample4X
     }
     
     required init(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func fadeInCurves() {
-        //return;
-        
-        self.curvesAreDirty = true
-        
-        dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0)) { [unowned self] in
-            // Create curves for each path in the manager
-            let paths = self.mapManager.pathAnnotations.keys
-            var lastPoint: CGPoint? = nil
-            var newCurves = [UIBezierPath]()
-            
-            self.curvesAreDirty = false
-            
-            for path in paths {
-                if let points = path.points {
-                    let newCurve = UIBezierPath()
-                    var curveStarted = false
-                    var firstPoint = CGPoint()
-                    for p in points {
-                        if let point = p as? Point {
-                            let coordinate = CLLocationCoordinate2D(latitude: point.latitude! as Double, longitude: point.longitude! as Double)
-                            let position = self.mapManager.mapView!.convertCoordinate(coordinate, toPointToView: self)
-                            if !curveStarted {
-                                newCurve.moveToPoint(position)
-                                lastPoint = position
-                                curveStarted = true
-                                firstPoint = position
-                            }
-                            else {
-                                // Filter out points that are very close together
-                                var addPoint = false
-                                if let last = lastPoint {
-                                    let distanceSquared = (last.x-position.x)*(last.x-position.x) + (last.y-position.y)*(last.y-position.y)
-                                    if distanceSquared > self.duplicatePointDistanceSquared {
-                                        addPoint = true
-                                    }
-                                }
-                                else {
-                                    addPoint = true
-                                }
-                                if addPoint {
-                                    newCurve.addLineToPoint(position)
-                                    lastPoint = position
-                                }
-                            }
-                        }
-                        
-                        if self.curvesAreDirty { return }
-                    }
-                    
-                    dispatch_async(dispatch_get_main_queue()) { [unowned self] in
-                        self.createBoatAnimationAlongCurve(newCurve, start: firstPoint)
-                    }
-                    newCurves.append(newCurve)
-                }
-            }
-            
-            self.curves.appendContentsOf(newCurves)
-            
-            dispatch_async(dispatch_get_main_queue()) { [unowned self] in
-                self.setNeedsDisplay()
-            }
-        }
+    func clear(animated animated: Bool) {
+        self.animations.removeAll()
     }
-    func fadeOutCurves() {
-        self.curves = [UIBezierPath]()
-        self.curvesAreDirty = true
-        for boat in self.boatViews {
-            UIView.animateWithDuration(0.5, delay: 0, options: [], animations: {
-                boat.alpha = 0
-                }, completion: { (b) -> Void in
-                    boat.removeFromSuperview()
-                    self.boatViews = self.boatViews.filter() { $0 !== boat }
-            })
-        }
+    
+    func viewWillChange() {
+        // Remove all animations
+        self.clear(animated: true)
         self.setNeedsDisplay()
     }
-    
-    func createBoatAnimationAlongCurve(curve: UIBezierPath, start: CGPoint) {
-        let boatView = UITextView()
-        boatView.text = "⛵️"
-        boatView.center = start
-        boatView.editable = false
-        boatView.userInteractionEnabled = false
-        boatView.alpha = 0
-        boatView.opaque = false
-        boatView.backgroundColor = UIColor.clearColor()
-        boatView.textColor = UIColor.whiteColor()
-        
-        
-        boatView.scrollEnabled = false
-        boatView.font = UIFont(name: "Apple Color Emoji", size: 18)
-
-        self.mapManager.mapView?.addSubview(boatView)
-    
-        boatView.sizeToFit()
-        boatView.layoutIfNeeded()
-
-        let animation = CAKeyframeAnimation()
-        animation.keyPath = "position"
-        animation.path = curve.CGPath;
-        //animation.rotationMode = kCAAnimationRotateAuto
-        animation.calculationMode = kCAAnimationCubicPaced
-    
-        animation.removedOnCompletion = true
-        animation.repeatCount = 1
-        //animation.beginTime = Double.random(0,3)
-        //animation.duration = Double.random(10,14)
-        
-        animation.duration = Double.random(2,3)
-        
-        
-        boatView.layer.addAnimation(animation, forKey: "move")
-        
-        boatViews.append(boatView)
-        
-        // Fade in
-        UIView.animateWithDuration(0.5, delay: 0, options: [], animations: {
-            boatView.alpha = 1.0 as CGFloat
-        }, completion: nil)
-        // Fade out and remove when done
-        UIView.animateWithDuration(0.5, delay: (animation.beginTime + animation.duration * Double(animation.repeatCount)) - 0.5, options: [], animations: {
-            boatView.alpha = 0
-            }, completion: { (b) -> Void in
-                boatView.removeFromSuperview()
-                self.boatViews = self.boatViews.filter() { $0 !== boatView }
-        })
-
+    func viewIsChanging() {
+        self.mapIsChanging = true
+    }
+    func viewDidChange() {
+        self.mapIsChanging = false
+        self.mapViewVersion += 1
     }
     
-    override func drawRect(rect: CGRect) {
-        super.drawRect(rect)
-//        UIColor.whiteColor().setStroke()
-//        for curve in curves {
-//            curve.stroke()
-//        }
+    func revealPath(path: Path, delay: NSTimeInterval = 0, duration: NSTimeInterval = 1.0) {
+        // Create a path entry animation
+        // First, calculate the points in screen coordinates, but do that on a background thread
+        // In order to do it in the background, we have to get unmanaged copies of all the path's points
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0)) { [unowned self] in
+            guard let managedPoints = path.points else { return }
+            var points = [UnmanagedPoint]()
+            
+            for p in managedPoints {
+                guard let point = p as? Point else { continue }
+                points.append(point.unmanagedCopy())
+            }
+            
+            let viewVersion = self.mapViewVersion
+            
+            dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0)) {
+                var animation = PathAnimation()
+                var lastAddedPoint: CGPoint? = nil
+                
+                for point in points {
+                    // Loop through each point and calculate its CGPoint position on screen
+                    let coordinate = CLLocationCoordinate2D(latitude: point.latitude! as Double, longitude: point.longitude! as Double)
+                    let position = self.mapManager.mapView!.convertCoordinate(coordinate, toPointToView: self)
+                    
+                    // Calculate the distance between this and the last point, setting to infinity if this is the first point
+                    // This is used to filter out points that are very close to each other and won't render differently
+                    let distanceSquared = lastAddedPoint == nil ? CGFloat.max : (lastAddedPoint!.x-position.x)*(lastAddedPoint!.x-position.x) + (lastAddedPoint!.y-position.y)*(lastAddedPoint!.y-position.y)
+                    if distanceSquared > self.duplicatePointDistanceSquared {
+                        // This point should be added
+                        lastAddedPoint = position
+                        animation.points.append(position)
+                    }
+                }
+                
+                // Calculate duration
+                var duration = 0 as NSTimeInterval
+                if points.count > 1 {
+                    let firstPoint = points[0]
+                    let lastPoint = points[points.count-1]
+                    if let startTime = firstPoint.created, endTime = lastPoint.created {
+                        duration = endTime.timeIntervalSinceDate(startTime) / 3000
+                    }
+                }
+                
+                animation.startTime = NSDate.init(timeIntervalSinceNow: delay)
+                animation.duration = duration
+                animation.progress = 0
+                
+                // Create one GL point at the start point
+                animation.pointArray.append(Float(animation.points[0].x))
+                animation.pointArray.append(Float(animation.points[0].y))
+                animation.colorArray.appendContentsOf([1, 1, 1, 0.5])
+                
+                dispatch_async(dispatch_get_main_queue()) { [unowned self] in
+                    // Make sure that these points are still good for the current state of the map
+                    if !self.mapIsChanging && self.mapViewVersion == viewVersion {
+                        self.animations.append(animation)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - GLKViewDelegate
+    func glkView(view: GLKView, drawInRect rect: CGRect) {
+        glClearColor(0.0, 0.0, 0.0, 0.0)
+        glClear(GLbitfield(GL_COLOR_BUFFER_BIT))
+        //glColor4f(1.0, 1.0, 1.0, 1.0)
+        glLineWidth(4)
+        glBlendFunc(GLenum(GL_SRC_ALPHA), GLenum(GL_ONE_MINUS_SRC_ALPHA))
+        glEnable(GLenum(GL_BLEND))
+        
+        self.renderingEffect.prepareToDraw()
+
+        // Render each animation
+        for a in self.animations {
+            glEnableVertexAttribArray(GLuint(GLKVertexAttrib.Position.rawValue))    // Sending vertex position data
+            glVertexAttribPointer(GLuint(GLKVertexAttrib.Position.rawValue), 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLint(sizeof(GLfloat) * 2), a.pointArray) // Here is where the vertex position data lives
+            glEnableVertexAttribArray(GLuint(GLKVertexAttrib.Color.rawValue))    // Sending vertex color data
+            glVertexAttribPointer(GLuint(GLKVertexAttrib.Color.rawValue), 4, GLenum(GL_FLOAT), GLboolean(GL_FALSE), GLint(sizeof(GLfloat) * 4), a.colorArray) // Here is where the vertex color data lives
+            glDrawArrays(GLenum(GL_LINE_STRIP), 0, GLint(a.pointArray.count / 2)) // Render!
+        }
+    }
+
+    // MARK: - GLKViewControllerDelegate
+    
+    func glkViewControllerUpdate(controller: GLKViewController) {
+        // Loop through animations and update each
+        for a in self.animations {
+            // Calculate progress
+            var progress = 1.0 as CGFloat
+            if let start = a.startTime, duration = a.duration where a.duration > 0 {
+                progress = CGFloat(NSDate().timeIntervalSinceDate(start) / duration)
+            }
+            
+            a.progress = progress
+            
+            if progress > 1 {
+                continue
+            }
+            if progress < 0 {
+                continue
+            }
+            // Add the appropriate number of points
+            // TODO: Calculate this based on the point timestamps, not just a simple linear progression
+            
+            var currentPointCount = a.pointArray.count / 2
+            while CGFloat(currentPointCount) < a.progress * CGFloat(a.points.count) && currentPointCount < a.points.count {
+                // We should add another point
+                a.pointArray.append(Float(a.points[currentPointCount].x))
+                a.pointArray.append(Float(a.points[currentPointCount].y))
+                a.colorArray.appendContentsOf([1, 1, 1, 0.5])
+                
+                currentPointCount = a.pointArray.count / 2
+            }
+        }
     }
 }

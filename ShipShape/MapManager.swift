@@ -28,6 +28,8 @@ class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
     var tappablePathPoints = [(CGPoint, NSManagedObjectID)]()  // Holds a list of points that are currently on screen and potentially tappable
     var selectedPointAnnotation: MGLPointAnnotation?
     
+    var searchForOtherPaths = true
+    
     var mapView: MGLMapView? = nil
     var mapIsLoaded = false
     var mapOverlay: AnimatedMapOverlay?
@@ -279,6 +281,7 @@ class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
     
     func addAnnotationForPath(path: Path) {
         updateAnnotationForPath(path, colorIndex: self.colorIndexer)
+        self.mapOverlay?.revealPath(path)
         self.colorIndexer += 1
     }
     func updateAnnotationForPath(path: Path, colorIndex: Int? = nil) {
@@ -375,7 +378,7 @@ class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
             if alpha < 0.1 { alpha = 0.1 }
             style.strokeColor = UIColor(hue: 0.57, saturation: 0.9, brightness: 1.0, alpha: 1.0)
             style.alpha = alpha
-            style.lineWidth = 3.0
+            style.lineWidth = 1.0 //3.0
         }
         else {
             // Style for other sailors' paths
@@ -471,7 +474,7 @@ class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
     // MARK: - MGLMapViewDelegate
     
     func mapView(mapView: MGLMapView, regionWillChangeAnimated animated: Bool) {
-        mapOverlay?.fadeOutCurves()
+        self.mapOverlay?.viewWillChange()
         if let delegate = self.calloutDelegate {
             delegate.dismissCallout()
         }
@@ -479,13 +482,23 @@ class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
         // Cancel any pending paths-in-view searches
         self.pathsInViewSearchTimer?.invalidate()
     }
+    func mapViewRegionIsChanging(mapView: MGLMapView) {
+        self.mapOverlay?.viewIsChanging()
+    }
     func mapView(mapView: MGLMapView, regionDidChangeAnimated animated: Bool) {
-        mapOverlay?.fadeInCurves()
-        self.updateTappablePoints()
+        //self.mapOverlay?.fadeInCurves()
+        self.mapOverlay?.viewDidChange()
+        //self.updateTappablePoints()
         
         // Search for paths in bound of the new view, but wait 0.5 seconds to filter out short pauses
-        self.pathsInViewSearchTimer = NSTimer.scheduledTimerWithTimeInterval(self.pathSearchTimeout, target: self, selector: #selector(getPathsInView), userInfo: nil, repeats: false)
+        if self.searchForOtherPaths {
+            self.pathsInViewSearchTimer = NSTimer.scheduledTimerWithTimeInterval(self.pathSearchTimeout, target: self, selector: #selector(getPathsInView), userInfo: nil, repeats: false)
+        }
 
+        // Re-trigger any animations
+        for p in self.pathAnnotations.keys {
+            self.mapOverlay?.revealPath(p)
+        }
     }
     
     func mapViewDidFinishLoadingMap(mapView: MGLMapView) {
@@ -513,7 +526,7 @@ class MapManager : NSObject, MGLMapViewDelegate, UIGestureRecognizerDelegate {
             return style.lineWidth
         }
         
-        return 5.0
+        return 1.0
     }
     func mapView(mapView: MGLMapView, strokeColorForShapeAnnotation annotation: MGLShape) -> UIColor {
         if let polyline = annotation as? MGLPolyline {
